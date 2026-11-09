@@ -99,7 +99,7 @@ public struct FTS5 {
     /// For example:
     ///
     ///     try FTS5.tokenize(query: "SQLite database")  // ["sqlite", "database"]
-    ///     try FTS5.tokenize(query: "Gustave Doré")     // ["gustave", "doré"])
+    ///     try FTS5.tokenize(query: "Gustave Doré")     // ["gustave", "doré"]
     ///
     /// Synonym (colocated) tokens are not present in the returned array. See
     /// `FTS5_TOKEN_COLOCATED` at <https://www.sqlite.org/fts5.html#custom_tokenizers>
@@ -283,7 +283,7 @@ extension FTS5: VirtualTableModule {
     }
 }
 
-/// A `FTS5TableDefinition` lets you define the components of an FTS5
+/// An `FTS5TableDefinition` lets you define the components of an FTS5
 /// virtual table.
 ///
 /// You don't create instances of this class. Instead, you use the `Database`
@@ -328,7 +328,7 @@ public final class FTS5TableDefinition {
     /// For example:
     ///
     /// ```swift
-    /// // CREATE VIRTUAL TABLE "documents" USING fts5(tokenize=porter)
+    /// // CREATE VIRTUAL TABLE "document" USING fts5(tokenize=porter)
     /// try db.create(virtualTable: "document", using: FTS5()) { t in
     ///     t.tokenizer = .porter()
     /// }
@@ -426,7 +426,7 @@ public final class FTS5TableDefinition {
     /// ```
     ///
     /// - parameter name: the column name.
-    /// - returns: A ``FTS5ColumnDefinition`` that allows you to refine the
+    /// - returns: An ``FTS5ColumnDefinition`` that allows you to refine the
     ///   column definition.
     @discardableResult
     public func column(_ name: String) -> FTS5ColumnDefinition {

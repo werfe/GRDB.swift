@@ -44,14 +44,14 @@ try migrator.migrate(dbQueue)
 3. An author must have a name.
 4. The country of an author is not always known.
 5. A book must have a title.
-6. The `book.authorId` column is used to link a book to the author it belongs to. This column is indexed in order to ease the selection of an author's books. A foreign key is defined from `book.authorId` column to `authors.id`, so that SQLite guarantees that no book refers to a missing author. The `onDelete: .cascade` option has SQLite automatically delete all of an author's books when that author is deleted. See [Foreign Key Actions](https://sqlite.org/foreignkeys.html#fk_actions) for more information.
+6. The `book.authorId` column is used to link a book to the author it belongs to. This column is indexed in order to ease the selection of an author's books. A foreign key is defined from `book.authorId` column to `author.id`, so that SQLite guarantees that no book refers to a missing author. The `onDelete: .cascade` option has SQLite automatically delete all of an author's books when that author is deleted. See [Foreign Key Actions](https://sqlite.org/foreignkeys.html#fk_actions) for more information.
 7. The `book.authorId` column is not null so that SQLite guarantees that all books have an author.
 
 Thanks to this database schema, the application will always process *consistent data*, no matter how wrong the Swift code can get. Even after a hard crash, all books will have an author, a non-nil title, etc.
 
 > Tip: **A local SQLite database is not a JSON payload loaded from a remote server.**
 >
-> The JSON format and content can not be controlled, and an application must defend itself against wacky servers. But a local database is under your full control. It is trustable. A relational database such as SQLite guarantees the quality of users data, as long as enough energy is put in the proper definition of the database schema.
+> The JSON format and content cannot be controlled, and an application must defend itself against wacky servers. But a local database is under your full control. It is trustworthy. A relational database such as SQLite guarantees the quality of users' data, as long as enough energy is put in the proper definition of the database schema.
 
 > Tip: **Plan early for future versions of your application**: use <doc:Migrations>.
 
@@ -120,7 +120,7 @@ let books = try dbQueue.read { db in
 }
 ```
 
-> Tip: When a column of a database table can't be NULL, define a non-optional property in the record type. On the other side, when the database may contain NULL, define an optional property. Compare:
+> Tip: When a column of a database table can't be NULL, define a non-optional property in the record type. On the other hand, when the database may contain NULL, define an optional property. Compare:
 >
 > ```swift
 > try db.create(table: "author") { t in
@@ -138,7 +138,7 @@ let books = try dbQueue.read { db in
 >
 > There are exceptions to this rule.
 >
-> For example, the `id` column is never NULL in the database. And yet, `Author` as an optional `id` property. That is because we want to create instances of `Author` before they could be inserted in the database, and be assigned an auto-incremented id. If the `id` property was not optional, the `Author` type could not profit from auto-incremented ids!
+> For example, the `id` column is never NULL in the database. And yet, `Author` has an optional `id` property. That is because we want to create instances of `Author` before they could be inserted in the database, and be assigned an auto-incremented id. If the `id` property was not optional, the `Author` type could not benefit from auto-incremented ids!
 >
 > Another exception to this rule is described in <doc:RecordTimestamps>, where the creation date of a record is never NULL in the database, but optional in the Swift type.
 
@@ -151,7 +151,7 @@ let books = try dbQueue.read { db in
 > }
 > ```
 >
-> Take care that **`Identifiable` is not a good fit for optional ids**. You will frequently meet optional ids for records with auto-incremented ids:
+> Be aware that **`Identifiable` is not a good fit for optional ids**. You will frequently meet optional ids for records with auto-incremented ids:
 >
 > ```swift
 > struct Player: Codable {
@@ -172,9 +172,9 @@ let books = try dbQueue.read { db in
 
 ### Record Types Hide Intimate Database Details
 
-In the previous sample codes, the `Book` and `Author` structs have one property per database column, and their types are natively supported by SQLite (`String`, `Int`, etc.)
+In the previous code samples, the `Book` and `Author` structs have one property per database column, and their types are natively supported by SQLite (`String`, `Int`, etc.)
 
-But it happens that raw database column names, or raw column types, are not a very good fit for the application.
+But sometimes raw database column names, or raw column types, are not a very good fit for the application.
 
 When this happens, it's time to **distinguish the Swift and database representations**. Record types are the dedicated place where raw database values can be transformed into Swift types that are well-suited for the rest of the application.
 
@@ -220,7 +220,7 @@ let novels = try dbQueue.read { db in
 
 #### Second Example: GPS Coordinates
 
-GPS coordinates can be stored in two distinct `latitude` and `longitude` columns. But the standard way to deal with such coordinate is a single `CLLocationCoordinate2D` struct.
+GPS coordinates can be stored in two distinct `latitude` and `longitude` columns. But the standard way to deal with such coordinates is a single `CLLocationCoordinate2D` struct.
 
 When this happens, keep column properties private, and provide sensible accessors instead:
 
@@ -256,11 +256,11 @@ Generally speaking, private properties make it possible to hide raw columns from
 
 #### Third Example: Money Amounts
 
-Before storing money amounts in an SQLite database, take care that [floating-point numbers are never a good fit](https://stackoverflow.com/questions/3730019/why-not-use-double-or-float-to-represent-currency).
+Before storing money amounts in an SQLite database, be aware that [floating-point numbers are never a good fit](https://stackoverflow.com/questions/3730019/why-not-use-double-or-float-to-represent-currency).
 
 SQLite only supports two kinds of numbers: integers and doubles, so we'll store amounts as integers. $12.00 will be represented by 1200, a quantity of cents. This allows SQLite to compute exact sums of price, for example.
 
-On the other side, an amount of cents is not very practical for the rest of the Swift application. The [`Decimal`] type looks like a better fit.
+On the other hand, an amount of cents is not very practical for the rest of the Swift application. The [`Decimal`] type looks like a better fit.
 
 That's why the `Product` record type has a `price: Decimal` property, backed by a `priceCents` integer column:
     
@@ -389,7 +389,7 @@ try dbQueue.read { db in
 }
 ```
 
-Extensions to the `DerivableRequest` protocol can not change the type of requests. They remain requests of the base record. To define requests of another type, use an extension to ``QueryInterfaceRequest``, as in the example below:
+Extensions to the `DerivableRequest` protocol cannot change the type of requests. They remain requests of the base record. To define requests of another type, use an extension to ``QueryInterfaceRequest``, as in the example below:
 
 ```swift
 extension QueryInterfaceRequest<Author> {
@@ -408,7 +408,7 @@ let names: Set<String> = try Author.all()
 
 ## Associations
 
-[Associations] help navigating from authors to their books and vice versa. Because the `book` table has an `authorId` column, we say that each book **belongs to** its author, and each author **has many** books:
+[Associations] help navigate from authors to their books and vice versa. Because the `book` table has an `authorId` column, we say that each book **belongs to** its author, and each author **has many** books:
 
 ```swift
 extension Book {
@@ -515,9 +515,9 @@ let authorships: [Authorship] = try dbQueue.read { db in
 }
 ```
 
-In the above sample codes, requests that fetch values from several tables are decoded into additional record types: `AuthorInfo`, `LiteraryCareer`, and `Authorship`.
+In the above code samples, requests that fetch values from several tables are decoded into additional record types: `AuthorInfo`, `LiteraryCareer`, and `Authorship`.
 
-Those record type conform to both [`Decodable`] and ``FetchableRecord``, so that they can feed from database rows. They do not provide any persistence methods, though. **All database writes are performed from persistable record instances** (of type `Author` or `Book`).
+Those record types conform to both [`Decodable`] and ``FetchableRecord``, so that they can be decoded from database rows. They do not provide any persistence methods, though. **All database writes are performed from persistable record instances** (of type `Author` or `Book`).
 
 For more information about associations, see the [Associations] guide.
 
@@ -536,7 +536,7 @@ author.books.each do |book| # Lazily fetch books on demand
 end
 ```
 
-**GRDB does not perform lazy loading.** In a GUI application, lazy loading can not be achieved without record management (as in [Core Data]), which in turn comes with non-trivial pain points for developers regarding concurrency. Instead of lazy loading, the library provides the tooling needed to fetch data, even complex graphs, in an [isolated] fashion, so that fetched values accurately represent the database content, and all database invariants are preserved. See the <doc:Concurrency> guide for more information.
+**GRDB does not perform lazy loading.** In a GUI application, lazy loading cannot be achieved without record management (as in [Core Data]), which in turn comes with non-trivial pain points for developers regarding concurrency. Instead of lazy loading, the library provides the tooling needed to fetch data, even complex graphs, in an [isolated] fashion, so that fetched values accurately represent the database content, and all database invariants are preserved. See the <doc:Concurrency> guide for more information.
 
 Vapor [Fluent] uses **eager loading**, which means that relationships are only fetched if explicitly requested:
 

@@ -24,7 +24,7 @@ Before upgrading, ensure you are using the [latest GRDB 6 release](https://githu
 
 GRDB 7 requires Xcode 16+ and a Swift 6 compiler.
 
-Depending of the language mode and level of concurrency checkings used by your application, you may see warnings or errors. See [Migrating to Swift 6] on swift.org for more information about Swift 6. See [Swift Concurrency and GRDB] for GRDB-focused advice.
+Depending on the language mode and level of concurrency checking used by your application, you may see warnings or errors. See [Migrating to Swift 6] on swift.org for more information about Swift 6. See [Swift Concurrency and GRDB] for GRDB-focused advice.
 
 ## New requirements
 
@@ -79,7 +79,7 @@ In GRDB 6, asynchronous database accesses such as `try await read { ... }` or `t
 
 In GRDB 7, asynchronous database accesses respect Task cancellation. If a Task is cancelled, reads and writes throw a `CancellationError`, pending transactions are rolled back, and the database is not modified. The only SQL statement that can execute in a cancelled database access is `ROLLBACK`.
 
-The effect of this change on your application depends on how it uses tasks. For example, take care of database jobs initiated frop the [`task`](https://developer.apple.com/documentation/swiftui/view/task(priority:_:)) SwiftUI modifier.
+The effect of this change on your application depends on how it uses tasks. For example, take care of database jobs initiated from the [`task`](https://developer.apple.com/documentation/swiftui/view/task(priority:_:)) SwiftUI modifier.
 
 If you want an asynchronous database access to always complete, regardless of Task cancellation, wrap it in an unstructured Task:
 
@@ -95,7 +95,7 @@ let task = Task {
 try await task.value
 ```
 
-Other asynchronous database accesses, such as methods accepting a completion blocks (`asyncRead`, etc.), Combine publishers, RxSwift observables, do not handle cancellation and will proceed to completion by default.
+Other asynchronous database accesses, such as methods accepting a completion block (`asyncRead`, etc.), Combine publishers, RxSwift observables, do not handle cancellation and will proceed to completion by default.
 
 ## Associations to record types named Bias, Focus, Gas, and Lens
 
@@ -160,9 +160,9 @@ You can still specify a transaction kind explicitly when necessary. See [Transac
 
 ## ValueObservation and the Main Actor
 
-In GRDB 7, `ValueObservation` fosters the main actor, because it is frequently used to automatically update database values on screen.
+In GRDB 7, `ValueObservation` favors the main actor, because it is frequently used to automatically update database values on screen.
 
-By default, its [`start`](https://swiftpackageindex.com/groue/GRDB.swift/documentation/grdb/valueobservation/start(in:scheduling:onerror:onchange:)) method must be started on the main actor, and its notification callbacks run on the main actor as well.
+By default, its [`start`](https://swiftpackageindex.com/groue/GRDB.swift/documentation/grdb/valueobservation/start(in:scheduling:onerror:onchange:)) method must be called on the main actor, and its notification callbacks run on the main actor as well.
     
 It is not necessary to call `MainActor.assumeIsolated` in `ValueObservation` callbacks:
 
@@ -235,9 +235,9 @@ In GRDB 7, you may need an additional import, depending on how GRDB is integrate
 
 Subclassing the [Record] class is **discouraged** in GRDB 7. Present in GRDB 1.0, in 2017, it has served its purpose. 
 
-It is not recommended to define any new type that subclass `Record`.
+It is not recommended to define any new type that subclasses `Record`.
 
-It is recommended to refactor `Record` subclasses into Swift structs, before you enable the strict concurrency checkings or the Swift 6 language mode. See [Migrating to Swift 6] for more information about Swift 6 language modes.
+It is recommended to refactor `Record` subclasses into Swift structs, before you enable the strict concurrency checking or the Swift 6 language mode. See [Migrating to Swift 6] for more information about Swift 6 language modes.
 
 For example:
 
@@ -273,7 +273,7 @@ Do not miss [Swift Concurrency and GRDB], for more recommendations regarding non
 
 - The `PersistenceContainer` subscript no longer guarantees that the value returned is the same as what was previously set. It only guarantees that both values are encoded identically in the database.
 
-- The async sequence returned by [`ValueObservation.values`](https://swiftpackageindex.com/groue/GRDB.swiftdocumentation/grdb/valueobservation/values(in:scheduling:bufferingpolicy:)) now iterates on the cooperative thread pool by default. Use .mainActor as the scheduler if you need the previous behavior.
+- The async sequence returned by [`ValueObservation.values`](https://swiftpackageindex.com/groue/GRDB.swift/documentation/grdb/valueobservation/values(in:scheduling:bufferingpolicy:)) now iterates on the cooperative thread pool by default. Use .mainActor as the scheduler if you need the previous behavior.
 
 [Migrating to Swift 6]: https://www.swift.org/migration/documentation/migrationguide
 [Sharing a Database]: https://swiftpackageindex.com/groue/GRDB.swift/documentation/grdb/databasesharing

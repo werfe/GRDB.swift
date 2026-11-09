@@ -11,7 +11,7 @@
 ///     // JOIN destination ON ...
 ///     Origin.including(required: association)
 ///
-/// For direct associations such as BelongTo or HasMany, the chain contains a
+/// For direct associations such as BelongsTo or HasMany, the chain contains a
 /// single element, the "destination", without intermediate step:
 ///
 ///     // "Origin" belongsTo "destination":
@@ -35,12 +35,12 @@
 ///         via: Pivot.belongsTo(Destination.self))
 ///     Origin.including(required: association)
 ///
-///     // "Origin" has many "destination" through "pivot1" and  "pivot2":
+///     // "Origin" has many "destination" through "pivot1" and "pivot2":
 ///     // SELECT origin.*, destination.*
 ///     // FROM origin
 ///     // JOIN pivot1 ON pivot1.originId = origin.id
 ///     // JOIN pivot2 ON pivot2.pivot1Id = pivot1.id
-///     // JOIN destination ON destination.id = pivot.destinationId
+///     // JOIN destination ON destination.id = pivot2.destinationId
 ///     let association = Origin.hasMany(
 ///         Destination.self,
 ///         through: Origin.hasMany(Pivot1.self),
@@ -194,7 +194,7 @@ enum SQLAssociationCardinality {
 ///     let request = Author.including(all: Author.books)
 ///     let authorInfos = try AuthorInfo.fetchAll(db, request)
 ///
-///     "book"
+///     // "book"
 ///     struct AuthorInfo: FetchableRecord, Decodable {
 ///         var author: Author
 ///         var book: Book
@@ -202,7 +202,7 @@ enum SQLAssociationCardinality {
 ///     let request = Author.including(required: Author.books)
 ///     let authorInfos = try AuthorInfo.fetchAll(db, request)
 ///
-///     "bookCount"
+///     // "bookCount"
 ///     struct AuthorInfo: FetchableRecord, Decodable {
 ///         var author: Author
 ///         var bookCount: Int
@@ -221,7 +221,7 @@ enum SQLAssociationKey: Refinable {
     ///         static let databaseTableName = "authors"
     ///     }
     ///     struct Book: TableRecord {
-    ///         let author = belongsTo(Author.self)
+    ///         static let author = belongsTo(Author.self)
     ///     }
     ///
     ///     let request = Book.including(required: Book.author)
@@ -229,13 +229,13 @@ enum SQLAssociationKey: Refinable {
     ///     row.scopes["author"]  // singularized "authors" table name
     case inflected(String)
     
-    /// A key that is inflected in plural contexts, but stricly honors
-    /// user-provided name in singular contexts.
+    /// A key that is inflected in plural contexts, but strictly honors
+    /// the user-provided name in singular contexts.
     ///
     /// For example:
     ///
     ///     struct Country: TableRecord {
-    ///         let demographics = hasOne(Demographics.self, key: "demographics")
+    ///         static let demographics = hasOne(Demographics.self, key: "demographics")
     ///     }
     ///
     ///     let request = Country.including(required: Country.demographics)
@@ -243,8 +243,8 @@ enum SQLAssociationKey: Refinable {
     ///     row.scopes["demographics"]  // not singularized
     case fixedSingular(String)
     
-    /// A key that is inflected in singular contexts, but stricly honors
-    /// user-provided name in plural contexts.
+    /// A key that is inflected in singular contexts, but strictly honors
+    /// the user-provided name in plural contexts.
     /// See .inflected and .fixedSingular for some context.
     case fixedPlural(String)
     

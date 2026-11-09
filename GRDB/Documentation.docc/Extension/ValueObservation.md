@@ -4,13 +4,13 @@
 
 ## Overview
 
-`ValueObservation` tracks insertions, updates, and deletions that impact the tracked value, whether performed with raw SQL, or <doc:QueryInterface>. This includes indirect changes triggered by [foreign keys actions](https://www.sqlite.org/foreignkeys.html#fk_actions) or [SQL triggers](https://www.sqlite.org/lang_createtrigger.html).
+`ValueObservation` tracks insertions, updates, and deletions that impact the tracked value, whether performed with raw SQL, or <doc:QueryInterface>. This includes indirect changes triggered by [foreign key actions](https://www.sqlite.org/foreignkeys.html#fk_actions) or [SQL triggers](https://www.sqlite.org/lang_createtrigger.html).
 
 See <doc:GRDB/ValueObservation#Dealing-with-Undetected-Changes> below for the list of exceptions.
 
 ## ValueObservation Usage
 
-1. Make sure that a unique database connection, ``DatabaseQueue`` or ``DatabasePool``, is kept open during the whole duration of the observation.
+1. Make sure that a single database connection, ``DatabaseQueue`` or ``DatabasePool``, is kept open during the whole duration of the observation.
 
 2. Create a `ValueObservation` with a closure that fetches the observed value:
 
@@ -72,13 +72,13 @@ See <doc:GRDB/ValueObservation#Dealing-with-Undetected-Changes> below for the li
 
 ## ValueObservation Behavior
 
-`ValueObservation` notifies an initial value before the eventual changes.
+`ValueObservation` notifies an initial value before subsequent changes.
 
 `ValueObservation` only notifies changes committed to disk.
 
 By default, `ValueObservation` notifies a fresh value whenever any component of its fetched value is modified (any fetched column, row, etc.). This can be configured: see <doc:ValueObservation#Specifying-the-Tracked-Region>.
 
-By default, `ValueObservation` notifies the initial value, as well as eventual changes and errors, on the main actor, asynchronously. This can be configured: see <doc:ValueObservation#ValueObservation-Scheduling>.
+By default, `ValueObservation` notifies the initial value, as well as subsequent changes and errors, on the main actor, asynchronously. This can be configured: see <doc:ValueObservation#ValueObservation-Scheduling>.
 
 By default, `ValueObservation` fetches a fresh value immediately after a change is committed in the database. In particular, modifying the database on the main thread triggers a fetch on the main thread as well. This behavior can be configured: see <doc:ValueObservation#ValueObservation-Scheduling>.
 
@@ -90,7 +90,7 @@ Starting an observation retains the database connection, until it is stopped. As
 
 The database observation stops when the cancellable returned by the `start` method is cancelled or deallocated, or if an error occurs.
 
-> Important: Take care that there are use cases that `ValueObservation` is unfit for.
+> Important: Be aware that there are use cases that `ValueObservation` is unfit for.
 >
 > For example, an application may need to process absolutely all changes, and avoid any coalescing. An application may also need to process changes before any further modifications could be performed in the database file. In those cases, the application needs to track *individual transactions*, not values: use ``DatabaseRegionObservation``.
 >
@@ -98,7 +98,7 @@ The database observation stops when the cancellable returned by the `start` meth
 
 ## ValueObservation Scheduling
 
-By default, `ValueObservation` notifies the initial value, as well as eventual changes and errors, on the main actor, asynchronously:
+By default, `ValueObservation` notifies the initial value, as well as subsequent changes and errors, on the main actor, asynchronously:
 
 ```swift
 // The default scheduling
@@ -114,7 +114,7 @@ You can change this behavior by adding a `scheduling` argument to the `start()` 
 
 For example, the ``ValueObservationMainActorScheduler/immediate`` scheduler notifies all values on the main actor, and notifies the first one immediately when the observation starts.
 
-It is very useful in graphic applications, because you can configure views right away, without waiting for the initial value to be fetched eventually. You don't have to implement any empty or loading screen, or to prevent some undesired initial animation. Take care that the user interface is not responsive during the fetch of the first value, so only use the `immediate` scheduling for very fast database requests!
+It is very useful in graphical applications, because you can configure views right away, without waiting for the initial value to be fetched eventually. You don't have to implement any empty or loading screen, or to prevent some undesired initial animation. Be aware that the user interface is not responsive during the fetch of the first value, so only use the `immediate` scheduling for very fast database requests!
 
 ```swift
 // Immediate scheduling notifies
@@ -129,7 +129,7 @@ let cancellable = observation
 // <- Here "Fresh value" has already been printed.
 ```
 
-The ``ValueObservationScheduler/async(onQueue:)`` scheduler asynchronously schedules values and errors on the dispatch queue of your choice. Make sure you provide a serial dispatch queue, because a concurrent one such as `DispachQueue.global(qos: .default)` would mess with the ordering of fresh value notifications:
+The ``ValueObservationScheduler/async(onQueue:)`` scheduler asynchronously schedules values and errors on the dispatch queue of your choice. Make sure you provide a serial dispatch queue, because a concurrent one such as `DispatchQueue.global(qos: .default)` would mess with the ordering of fresh value notifications:
 
 ```swift
 // Async scheduling notifies all values
@@ -168,11 +168,11 @@ do {
 
 ```
 
-As described above, the `scheduling` argument controls the execution of the change and error callbacks. You also have some control on the execution of the database fetch:
+As described above, the `scheduling` argument controls the execution of the change and error callbacks. You also have some control over the execution of the database fetch:
 
 - With the `.immediate` scheduling, the initial fetch is always performed synchronously, on the main actor, when the observation starts, so that the initial value can be notified immediately.
 
-- With the default `.async` scheduling, the initial fetch is always performed asynchronouly. It never blocks the main thread.
+- With the default `.async` scheduling, the initial fetch is always performed asynchronously. It never blocks the main thread.
 
 - By default, fresh values are fetched immediately after the database was changed. In particular, modifying the database on the main thread triggers a fetch on the main thread as well.
 
@@ -183,7 +183,7 @@ As described above, the `scheduling` argument controls the execution of the chan
 
 ## ValueObservation Sharing
 
-Sharing a `ValueObservation` spares database resources. When a database change happens, a fresh value is fetched only once, and then notified to all clients of the shared observation.
+Sharing a `ValueObservation` saves database resources. When a database change happens, a fresh value is fetched only once, and then delivered to all clients of the shared observation.
 
 You build a shared observation with ``shared(in:scheduling:extent:)``:
 
@@ -232,7 +232,7 @@ This ``tracking(region:_:fetch:)`` method lets you entirely separate the **obser
 - Changes to the database schema, changes to internal system tables such as `sqlite_master`.
 - Changes to [`WITHOUT ROWID`](https://www.sqlite.org/withoutrowid.html) tables.
 
-To have observations notify a fresh values after such an undetected change was performed, applications can take explicit action. For example, cancel and restart observations. Alternatively, call the ``Database/notifyChanges(in:)`` `Database` method from a write transaction:
+To have observations notify fresh values after such an undetected change was performed, applications can take explicit action. For example, cancel and restart observations. Alternatively, call the ``Database/notifyChanges(in:)`` `Database` method from a write transaction:
     
 ```swift
 try dbQueue.write { db in
@@ -265,17 +265,17 @@ When needed, you can help GRDB optimize observations and reduce database content
 
 > Important: **Keep your number of observations bounded.**
 >
-> In particular, do not observe independently all elements in a list. Instead, observe the whole list in a single observation.
+> In particular, do not independently observe all elements in a list. Instead, observe the whole list in a single observation.
 
 > Tip: Stop observations when possible.
 >
 > For example, if a `UIViewController` needs to display database values, it can start the observation in `viewWillAppear`, and stop it in `viewWillDisappear`.
 >
-> In a SwiftUI application, you can profit from the [GRDBQuery](https://github.com/groue/GRDBQuery) companion library, and its [`View.queryObservation(_:)`](https://swiftpackageindex.com/groue/grdbquery/documentation/grdbquery/queryobservation) method.
+> In a SwiftUI application, you can benefit from the [GRDBQuery](https://github.com/groue/GRDBQuery) companion library, and its [`View.queryObservation(_:)`](https://swiftpackageindex.com/groue/grdbquery/documentation/grdbquery/queryobservation) method.
 
 > Tip: Share observations when possible.
 >
-> Each call to `ValueObservation.start` method triggers independent values refreshes. When several components of your app are interested in the same value, consider sharing the observation with ``shared(in:scheduling:extent:)``.
+> Each call to the `ValueObservation.start` method triggers independent value refreshes. When several components of your app are interested in the same value, consider sharing the observation with ``shared(in:scheduling:extent:)``.
 
 > Tip: When the observation processes some raw fetched values, use the ``map(_:)`` operator:
 >
@@ -288,7 +288,7 @@ When needed, you can help GRDB optimize observations and reduce database content
 >
 > // Optimized observation
 > let observation = ValueObservation
->     .tracking { db try Player.fetchAll(db) }
+>     .tracking { db in try Player.fetchAll(db) }
 >     .map { players in computeMyValue(players) }
 > ```
 >
@@ -296,7 +296,7 @@ When needed, you can help GRDB optimize observations and reduce database content
 
 > Tip: When the observation tracks a constant database region, create an optimized observation with the ``tracking(regions:fetch:)`` or ``trackingConstantRegion(_:)`` methods. Make sure you read the documentation of those methods, or you might write an observation that misses some database changes.
 
-**Truncating WAL checkpoints impact ValueObservation.** Such checkpoints are performed with ``Database/checkpoint(_:on:)`` or [`PRAGMA wal_checkpoint`](https://www.sqlite.org/pragma.html#pragma_wal_checkpoint). When an observation is started on a ``DatabasePool``, from a database that has a missing or empty [wal file](https://www.sqlite.org/tempfiles.html#write_ahead_log_wal_files), the observation will always notify two values when it starts, even if the database content is not changed. This is a consequence of the impossibility to create the [wal snapshot](https://www.sqlite.org/c3ref/snapshot_get.html) needed for detecting that no changes were performed during the observation startup. If your application performs truncating checkpoints, you will avoid this behavior if you recreate a non-empty wal file before starting observations. To do so, perform any kind of no-op transaction (such a creating and dropping a dummy table).
+**Truncating WAL checkpoints impact ValueObservation.** Such checkpoints are performed with ``Database/checkpoint(_:on:)`` or [`PRAGMA wal_checkpoint`](https://www.sqlite.org/pragma.html#pragma_wal_checkpoint). When an observation is started on a ``DatabasePool``, from a database that has a missing or empty [wal file](https://www.sqlite.org/tempfiles.html#write_ahead_log_wal_files), the observation will always notify two values when it starts, even if the database content is not changed. This is a consequence of the impossibility of creating the [wal snapshot](https://www.sqlite.org/c3ref/snapshot_get.html) needed for detecting that no changes were performed during the observation startup. If your application performs truncating checkpoints, you will avoid this behavior if you recreate a non-empty wal file before starting observations. To do so, perform any kind of no-op transaction (such as creating and dropping a dummy table).
 
 
 ## Topics

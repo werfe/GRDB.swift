@@ -73,7 +73,7 @@ public struct FTS5Tokenization: OptionSet, Sendable {
 /// - ``FTS5TokenCallback``
 public protocol FTS5Tokenizer: AnyObject {
     /// Tokenizes the text described by `pText` and `nText`, and
-    /// notifies found tokens to the `tokenCallback` function.
+    /// passes found tokens to the `tokenCallback` function.
     ///
     /// It matches the `xTokenize` function documented at <https://www.sqlite.org/fts5.html#custom_tokenizers>
     ///
@@ -147,7 +147,6 @@ extension FTS5Tokenizer {
     /// - parameter tokenization: The reason why tokenization is requested:
     ///     - .document: Tokenize like a document being inserted into an FTS table.
     ///     - .query: Tokenize like the search pattern of the MATCH operator.
-    /// - parameter tokenizer: A FTS5TokenizerDescriptor such as .ascii()
     private func tokenize(_ string: String, for tokenization: FTS5Tokenization)
     throws -> [(token: String, flags: FTS5TokenFlags)]
     {

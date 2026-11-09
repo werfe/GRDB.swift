@@ -16,7 +16,7 @@ import Foundation
 ///     """
 /// ```
 ///
-/// The resulting rows contains columns from both player and team tables:
+/// The resulting rows contain columns from both player and team tables:
 ///
 /// ```swift
 /// // [id: 1, name: "Arthur", teamId: 42, id: 42, name: "Reds"]
@@ -32,7 +32,7 @@ import Foundation
 /// access player and team columns independently, with row ``Row/scopes``:
 ///
 /// ```swift
-/// let adapters = try splittingRowAdapters([
+/// let adapters = try splittingRowAdapters(columnCounts: [
 ///     db.columns(in: "player").count,
 ///     db.columns(in: "team").count,
 /// ])
@@ -60,12 +60,12 @@ import Foundation
 ///
 ///     // Team(id: 42, name: "Reds")
 ///     // nil if the LEFT JOIN has fetched NULL team columns
-///     if let team: Team? = row["team"]
+///     let team: Team? = row["team"]
 /// }
 /// ```
 ///
 /// You can package this technique in a dedicated type, as in the next
-/// example. It enhances the previous sample codes with:
+/// example. It enhances the previous code samples with:
 ///
 /// - Support for record types that customize their fetched columns
 ///   with ``TableRecord/databaseSelection-7iphs``.
@@ -96,7 +96,7 @@ import Foundation
 ///         let request: SQLRequest<PlayerInfo> = """
 ///             SELECT
 ///                 \(columnsOf: Player.self), -- Instead of player.*
-///                 \(columnsOf: Team.self),   -- Instead of team.*
+///                 \(columnsOf: Team.self)    -- Instead of team.*
 ///             FROM player
 ///             LEFT JOIN team ON team.id = player.teamId
 ///             WHERE player.id = \(playerId)
@@ -159,7 +159,7 @@ public struct _LayoutedColumnMapping {
     /// that column.
     public let _layoutColumns: [(Int, String)]
     
-    /// A cache for layoutIndex(ofColumn:)
+    /// A cache for _layoutIndex(ofColumn:)
     let lowercaseColumnIndexes: [String: Int]   // [mappedColumn: layoutColumnIndex]
     
     /// Creates a _LayoutedColumnMapping from an array of (baseIndex, mappedName)
@@ -176,7 +176,7 @@ public struct _LayoutedColumnMapping {
     /// Use it in your custom RowAdapter type:
     ///
     ///     struct FooBarAdapter : RowAdapter {
-    ///         func layoutAdapter(layout: _RowLayout) throws -> any _LayoutedRowAdapter {
+    ///         func _layoutedAdapter(from layout: some _RowLayout) throws -> any _LayoutedRowAdapter {
     ///             return _LayoutedColumnMapping(layoutColumns: [(1, "foo"), (2, "bar")])
     ///         }
     ///     }
@@ -222,7 +222,7 @@ extension _LayoutedColumnMapping: _RowLayout {
 
 /// `_LayoutedRowAdapter` is a protocol that supports the `RowAdapter` protocol.
 ///
-/// GRBD ships with a ready-made type that adopts this protocol:
+/// GRDB ships with a ready-made type that adopts this protocol:
 /// `_LayoutedColumnMapping`.
 public protocol _LayoutedRowAdapter {
     /// A LayoutedColumnMapping that defines how to map a column name to a
@@ -255,7 +255,7 @@ extension Statement: _RowLayout {
     }
 }
 
-/// A type that helps two incompatible row interfaces working together.
+/// A type that helps two incompatible row interfaces work together.
 ///
 /// Row adapters present database rows in the way expected by the
 /// row consumers.
@@ -343,7 +343,7 @@ extension RowAdapter {
     /// Returns an adapter based on self, with added scopes.
     ///
     /// If self already defines scopes, the added scopes replace
-    /// eventual existing scopes with the same name.
+    /// any existing scopes with the same name.
     ///
     /// - parameter scopes: A dictionary that maps scope names to
     ///   row adapters.
@@ -495,7 +495,7 @@ public struct RangeRowAdapter: RowAdapter, Sendable {
 /// `ScopeAdapter` is a row adapter that defines row scopes.
 ///
 /// `ScopeAdapter` does not change the columns and values of the fetched
-/// row. Instead, it defines *scopes* based on other adapter, which you
+/// row. Instead, it defines *scopes* based on other adapters, which you
 /// access through the ``Row/scopes`` property of the fetched rows.
 ///
 /// For example:
@@ -559,7 +559,7 @@ public struct ScopeAdapter: RowAdapter {
     /// The scope adapters
     let scopes: [String: any RowAdapter]
     
-    /// Creates an adapter that preserves row contents and add scoped rows.
+    /// Creates an adapter that preserves row contents and adds scoped rows.
     ///
     /// For example:
     ///
@@ -575,7 +575,7 @@ public struct ScopeAdapter: RowAdapter {
         self.init(base: SuffixRowAdapter(fromIndex: 0), scopes: scopes)
     }
     
-    /// Creates an adapter based on the base adapter, and add scoped rows.
+    /// Creates an adapter based on the base adapter, and adds scoped rows.
     ///
     /// For example:
     ///
@@ -583,15 +583,14 @@ public struct ScopeAdapter: RowAdapter {
     ///     let adapter = ScopeAdapter(base: baseAdapter, scopes: ["suffix": SuffixRowAdapter(fromIndex: 1)])
     ///     let row = try Row.fetchOne(db, sql: "SELECT 1, 2, 3", adapter: adapter)!
     ///     row                   // [1]
-    ///     row.scopes["initial"] // [2, 3]
+    ///     row.scopes["suffix"] // [2, 3]
     ///
     /// If the base adapter already defines scopes, the given scopes replace
-    /// eventual existing scopes with the same name.
+    /// any existing scopes with the same name.
     ///
     /// This initializer is equivalent to `baseAdapter.addingScopes(scopes)`.
     ///
-    /// - parameter base: A dictionary that maps scope names to
-    ///   row adapters.
+    /// - parameter base: A row adapter.
     /// - parameter scopes: A dictionary that maps scope names to
     ///   row adapters.
     public init(base: some RowAdapter, scopes: [String: any RowAdapter]) {

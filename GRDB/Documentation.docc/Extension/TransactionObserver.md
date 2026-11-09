@@ -17,17 +17,17 @@ let observer = MyObserver()
 dbQueue.add(transactionObserver: observer)
 ```
 
-By default, database holds weak references to its transaction observers: they are not retained, and stop getting notifications after they are deallocated. See <doc:TransactionObserver#Observation-Extent> for more options.
+By default, the database holds weak references to its transaction observers: they are not retained, and stop getting notifications after they are deallocated. See <doc:TransactionObserver#Observation-Extent> for more options.
 
 ## Database Changes And Transactions
 
-Database changes are notified to the ``databaseDidChange(with:)`` callback. This includes indirect changes triggered by `ON DELETE` and `ON UPDATE` actions associated to [foreign keys](https://www.sqlite.org/foreignkeys.html#fk_actions), and [SQL triggers](https://www.sqlite.org/lang_createtrigger.html).
+Database changes are reported to the ``databaseDidChange(with:)`` callback. This includes indirect changes triggered by `ON DELETE` and `ON UPDATE` actions associated with [foreign keys](https://www.sqlite.org/foreignkeys.html#fk_actions), and [SQL triggers](https://www.sqlite.org/lang_createtrigger.html).
 
-Transaction completions are notified to the ``databaseWillCommit()-7mksu``, ``databaseDidCommit(_:)`` and ``databaseDidRollback(_:)`` callbacks.
+Transaction completions are reported to the ``databaseWillCommit()-7mksu``, ``databaseDidCommit(_:)`` and ``databaseDidRollback(_:)`` callbacks.
 
 > Important: Some changes and transactions are not automatically notified. See <doc:GRDB/TransactionObserver#Dealing-with-Undetected-Changes> below.
 
-Notified changes are not actually written to disk until the transaction commits, and the `databaseDidCommit` callback is called. On the other side, `databaseDidRollback` confirms their invalidation:
+Notified changes are not actually written to disk until the transaction commits, and the `databaseDidCommit` callback is called. On the other hand, `databaseDidRollback` confirms their invalidation:
 
 ```swift
 try dbQueue.write { db in
@@ -76,7 +76,7 @@ try dbQueue.inTransaction { db in
 }
 ```
 
-Eventual errors thrown from `databaseWillCommit` are exposed to the application code:
+Errors thrown from `databaseWillCommit` are exposed to the application code:
 
 ```swift
 do {
@@ -97,7 +97,7 @@ do {
 
 **Transaction observers can choose the database changes they are interested in.**
 
-By default, the ``observes(eventsOfKind:)`` method filters events that are notified to ``databaseDidChange(with:)``. It is the most efficient and recommended change filtering technique, because it is only called once before a database query is executed, and can completely disable change tracking:
+By default, the ``observes(eventsOfKind:)`` method filters events that are reported to ``databaseDidChange(with:)``. It is the most efficient and recommended change filtering technique, because it is only called once before a database query is executed, and can completely disable change tracking:
 
 ```swift
 // Calls `observes(eventsOfKind:)` once.
@@ -162,7 +162,7 @@ dbQueue.inDatabase { db in
 
 - The default extent is `.observerLifetime`: the database holds a weak reference to the observer, and the observation automatically ends when the observer is deallocated. Meanwhile, the observer is notified of all changes and transactions.
 
-- `.nextTransaction` activates the observer until the current or next transaction completes. The database keeps a strong reference to the observer until its `databaseDidCommit` or `databaseDidRollback` callback is called. Hereafter the observer won't get any further notification.
+- `.nextTransaction` activates the observer until the current or next transaction completes. The database keeps a strong reference to the observer until its `databaseDidCommit` or `databaseDidRollback` callback is called. After that, the observer won't get any further notification.
 
 - `.databaseLifetime` has the database retain and notify the observer until the database connection is closed.
 
@@ -230,7 +230,7 @@ This extra API can be activated in two ways:
 
 ## Dealing with Undetected Changes
 
-The changes and transactions that are not automatically notified to transaction observers are:
+The changes and transactions that are not automatically reported to transaction observers are:
 
 - Read-only transactions.
 - Changes and transactions performed by external database connections.

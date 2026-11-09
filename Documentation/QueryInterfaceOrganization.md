@@ -3,7 +3,7 @@ Query Interface Organization
 
 **The [query interface] is a Swift API that approximates the [SQLite SELECT query grammar](https://sqlite.org/lang_select.html) through a hierarchy of values and protocols.**
 
-This document exposes its inner organization, so that you can leverage the most of those types and protocols when you want it.
+This document describes its inner organization, so that you can make the most of those types and protocols when you want it.
 
 In the diagram below, protocols are pale blue and have rounded corners, and standard types are grey rectangles. Solid arrows read "inherits from", and dashed arrows read "produces". Generic types are marked as such, as well as "PATs" (protocols with associated types).
 
@@ -132,7 +132,9 @@ DatabaseRegionConvertible feeds [DatabaseRegionObservation], which tracks databa
 ```swift
 let request = Player.all()
 let observation = DatabaseRegionObservation(tracking: request)
-let observer = try observation.start(in: dbQueue) { (db: Database) in
+let cancellable = observation.start(in: dbQueue) { error in
+    // Handle error
+} onChange: { (db: Database) in
     print("Players were changed")
 }
 ```
@@ -319,10 +321,10 @@ let players: [Player] = try request.fetchAll(db)
 SQL("name = \("O'Brien")").sqlExpression
 
 // SQLOrdering
-SQL("name DESC)").sqlOrdering
+SQL("name DESC").sqlOrdering
 
 // SQLSelection
-SQL("score + bonus AS total)").sqlSelection
+SQL("score + bonus AS total").sqlSelection
 SQL("*").sqlSelection
 
 // SQLRequest

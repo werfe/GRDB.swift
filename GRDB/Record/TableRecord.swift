@@ -54,7 +54,7 @@ import Foundation
 ///
 /// ### Building Query Interface Requests
 ///
-/// `TableRecord` provide convenience access to most ``DerivableRequest`` and
+/// `TableRecord` provides convenience access to most ``DerivableRequest`` and
 /// ``QueryInterfaceRequest`` methods as static methods on the type itself.
 ///
 /// - ``aliased(_:)-sdcd``
@@ -517,9 +517,9 @@ extension TableRecord {
     /// struct Citizenship: TableRecord { }
     ///
     /// try dbQueue.read { db in
-    ///     let playerExists = Player.exists(db, key: ["id": 1])
-    ///     let playerExists = Player.exists(db, key: ["email": "arthur@example.com"])
-    ///     let citizenshipExists = Citizenship.exists(db, key: [
+    ///     let playerExists = try Player.exists(db, key: ["id": 1])
+    ///     let playerExists = try Player.exists(db, key: ["email": "arthur@example.com"])
+    ///     let citizenshipExists = try Citizenship.exists(db, key: [
     ///         "citizenId": 1,
     ///         "countryCode": "FR",
     ///     ])
@@ -918,9 +918,9 @@ public enum RecordError: Error {
     /// ``MutablePersistableRecord/update(_:onConflict:)``. In this case,
     /// the error means that the database was not changed.
     ///
-    /// It can also be thrown from methods that inserts or update with a
+    /// It can also be thrown from methods that insert or update with a
     /// `RETURNING` clause, and the `IGNORE` conflict policy. In this case,
-    /// the error notifies that a conflict has prevented the change from
+    /// the error indicates that a conflict has prevented the change from
     /// being applied.
     ///
     /// - parameters:
@@ -964,7 +964,7 @@ extension TableRecord {
 }
 
 extension TableRecord where Self: EncodableRecord {
-    /// Returns an error that tells that the record does not exist in
+    /// Returns an error indicating that the record does not exist in
     /// the database.
     ///
     /// - returns: ``RecordError/recordNotFound(databaseTableName:key:)``, or

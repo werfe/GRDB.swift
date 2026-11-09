@@ -130,9 +130,9 @@ extension Int: DatabaseValueConvertible, StatementColumnConvertible {
         Int64(self).databaseValue
     }
     
-    /// Returns a `Int` from the specified database value.
+    /// Returns an `Int` from the specified database value.
     ///
-    /// If the database value contains a integer representable in this type,
+    /// If the database value contains an integer representable in this type,
     /// returns this integer.
     ///
     /// If the database value contains a double representable in this type after
@@ -169,9 +169,9 @@ extension Int8: DatabaseValueConvertible, StatementColumnConvertible {
         Int64(self).databaseValue
     }
     
-    /// Returns a `Int8` from the specified database value.
+    /// Returns an `Int8` from the specified database value.
     ///
-    /// If the database value contains a integer representable in this type,
+    /// If the database value contains an integer representable in this type,
     /// returns this integer.
     ///
     /// If the database value contains a double representable in this type after
@@ -208,9 +208,9 @@ extension Int16: DatabaseValueConvertible, StatementColumnConvertible {
         Int64(self).databaseValue
     }
     
-    /// Returns a `Int16` from the specified database value.
+    /// Returns an `Int16` from the specified database value.
     ///
-    /// If the database value contains a integer representable in this type,
+    /// If the database value contains an integer representable in this type,
     /// returns this integer.
     ///
     /// If the database value contains a double representable in this type after
@@ -247,9 +247,9 @@ extension Int32: DatabaseValueConvertible, StatementColumnConvertible {
         Int64(self).databaseValue
     }
     
-    /// Returns a `Int32` from the specified database value.
+    /// Returns an `Int32` from the specified database value.
     ///
-    /// If the database value contains a integer representable in this type,
+    /// If the database value contains an integer representable in this type,
     /// returns this integer.
     ///
     /// If the database value contains a double representable in this type after
@@ -282,9 +282,9 @@ extension Int64: DatabaseValueConvertible, StatementColumnConvertible {
         DatabaseValue(storage: .int64(self))
     }
     
-    /// Returns a `Int64` from the specified database value.
+    /// Returns an `Int64` from the specified database value.
     ///
-    /// If the database value contains a integer, returns this integer.
+    /// If the database value contains an integer, returns this integer.
     ///
     /// If the database value contains a double representable in this type after
     /// rounding toward zero, returns the conversion.
@@ -331,7 +331,7 @@ extension UInt: DatabaseValueConvertible, StatementColumnConvertible {
     
     /// Returns a `UInt` from the specified database value.
     ///
-    /// If the database value contains a integer representable in this type,
+    /// If the database value contains an integer representable in this type,
     /// returns this integer.
     ///
     /// If the database value contains a double representable in this type after
@@ -370,7 +370,7 @@ extension UInt8: DatabaseValueConvertible, StatementColumnConvertible {
     
     /// Returns a `UInt8` from the specified database value.
     ///
-    /// If the database value contains a integer representable in this type,
+    /// If the database value contains an integer representable in this type,
     /// returns this integer.
     ///
     /// If the database value contains a double representable in this type after
@@ -409,7 +409,7 @@ extension UInt16: DatabaseValueConvertible, StatementColumnConvertible {
     
     /// Returns a `UInt16` from the specified database value.
     ///
-    /// If the database value contains a integer representable in this type,
+    /// If the database value contains an integer representable in this type,
     /// returns this integer.
     ///
     /// If the database value contains a double representable in this type after
@@ -448,7 +448,7 @@ extension UInt32: DatabaseValueConvertible, StatementColumnConvertible {
     
     /// Returns a `UInt32` from the specified database value.
     ///
-    /// If the database value contains a integer representable in this type,
+    /// If the database value contains an integer representable in this type,
     /// returns this integer.
     ///
     /// If the database value contains a double representable in this type after
@@ -487,7 +487,7 @@ extension UInt64: DatabaseValueConvertible, StatementColumnConvertible {
     
     /// Returns a `UInt64` from the specified database value.
     ///
-    /// If the database value contains a integer representable in this type,
+    /// If the database value contains an integer representable in this type,
     /// returns this integer.
     ///
     /// If the database value contains a double representable in this type after
@@ -522,7 +522,7 @@ extension Double: DatabaseValueConvertible, StatementColumnConvertible {
     
     /// Returns a `Double` from the specified database value.
     ///
-    /// If the database value contains a integer, returns the conversion.
+    /// If the database value contains an integer, returns the conversion.
     ///
     /// If the database value contains a double, returns this double.
     ///
@@ -562,7 +562,7 @@ extension Float: DatabaseValueConvertible, StatementColumnConvertible {
     
     /// Returns a `Float` from the specified database value.
     ///
-    /// If the database value contains a integer, returns the conversion.
+    /// If the database value contains an integer, returns the conversion.
     ///
     /// If the database value contains a double, returns the conversion.
     ///
@@ -592,7 +592,9 @@ extension String: DatabaseValueConvertible, StatementColumnConvertible {
     ///     - sqliteStatement: A pointer to an SQLite statement.
     ///     - index: The column index.
     public init(sqliteStatement: SQLiteStatement, index: CInt) {
-        self = String(cString: sqlite3_column_text(sqliteStatement, index)!)
+        let text = sqlite3_column_text(sqliteStatement, index)
+        let byteCount = Int(sqlite3_column_bytes(sqliteStatement, index))
+        self = String(decoding: UnsafeBufferPointer(start: text, count: byteCount), as: UTF8.self)
     }
     
     /// Returns a TEXT database value.
@@ -604,7 +606,7 @@ extension String: DatabaseValueConvertible, StatementColumnConvertible {
     ///
     /// If the database value contains a string, returns it.
     ///
-    /// If the database value contains a data blob, parses this data as an
+    /// If the database value contains a data blob, parses this data as a
     /// UTF8 string.
     ///
     /// Otherwise, returns nil.
@@ -622,21 +624,55 @@ extension String: DatabaseValueConvertible, StatementColumnConvertible {
     }
     
     public func bind(to sqliteStatement: SQLiteStatement, at index: CInt) -> CInt {
-        sqlite3_bind_text(sqliteStatement, index, self, -1, SQLITE_TRANSIENT)
+        var string = self
+        return string.withSQLiteText {
+            sqlite3_bind_text(sqliteStatement, index, $0, $1, SQLITE_TRANSIENT)
+        }
     }
     
     /// Calls the given closure after binding a statement argument.
     ///
     /// The binding is valid only during the execution of this method.
     ///
+    /// This method is mutating because the string is made contiguous
+    /// if necessary.
+    ///
     /// - parameter sqliteStatement: An SQLite statement.
     /// - parameter index: 1-based index to statement arguments.
     /// - parameter body: The closure to execute when argument is bound.
-    func withBinding<T>(to sqliteStatement: SQLiteStatement, at index: CInt, do body: () throws -> T) throws -> T {
-        try withCString {
-            let code = sqlite3_bind_text(sqliteStatement, index, $0, -1, nil /* SQLITE_STATIC */)
+    mutating func withBinding<T>(
+        to sqliteStatement: SQLiteStatement,
+        at index: CInt,
+        do body: () throws -> T
+    ) throws -> T {
+        try withSQLiteText {
+            let code = sqlite3_bind_text(sqliteStatement, index, $0, $1, nil /* SQLITE_STATIC */)
             try checkBindingSuccess(code: code, sqliteStatement: sqliteStatement)
             return try body()
+        }
+    }
+    
+    /// Runs body over the content of this string as a UTF8 string. This
+    /// method exists because it deals with the ASCII NUL (\0) characters,
+    /// unlike C strings.
+    ///
+    /// This method is mutating because the string is made contiguous
+    /// if necessary.
+    mutating func withSQLiteText<T>(
+        _ body: (UnsafePointer<CChar>, CInt) throws -> T
+    ) rethrows -> T {
+        try withUTF8 { utf8 in
+            guard let baseAddress = utf8.baseAddress else {
+                // Empty string: yield a non-nil pointer to the NUL string
+                // terminator, so that functions such as sqlite3_bind_text()
+                // unambiguously interpret it as the empty string.
+                return try withUnsafePointer(to: 0 as CChar) {
+                    try body($0, 0)
+                }
+            }
+            return try baseAddress.withMemoryRebound(to: CChar.self, capacity: utf8.count) {
+                try body($0, CInt(utf8.count))
+            }
         }
     }
 }
@@ -648,7 +684,7 @@ extension DatabaseFunction {
     /// An SQL function that calls the Foundation
     /// `String.capitalized` property.
     ///
-    /// `NULL` is returned for non-strings values.
+    /// `NULL` is returned for non-string values.
     ///
     /// This function is automatically added by GRDB to your database
     /// connections. It is the function used by the query interface's
@@ -656,7 +692,7 @@ extension DatabaseFunction {
     ///
     /// ```swift
     /// let request = Player.select { $0.name.capitalized }
-    /// let names = try String.fetchAll(dbQueue, request) // [String]
+    /// let names = try String.fetchAll(db, request) // [String]
     /// ```
     public static let capitalize =
         DatabaseFunction("swiftCapitalizedString", argumentCount: 1, pure: true) { dbValues in
@@ -669,7 +705,7 @@ extension DatabaseFunction {
     /// An SQL function that calls the Swift
     /// `String.lowercased()` method.
     ///
-    /// `NULL` is returned for non-strings values.
+    /// `NULL` is returned for non-string values.
     ///
     /// This function is automatically added by GRDB to your database
     /// connections. It is the function used by the query interface's
@@ -677,7 +713,7 @@ extension DatabaseFunction {
     ///
     /// ```swift
     /// let request = Player.select { $0.name.lowercased }
-    /// let names = try String.fetchAll(dbQueue, request) // [String]
+    /// let names = try String.fetchAll(db, request) // [String]
     /// ```
     public static let lowercase =
         DatabaseFunction("swiftLowercaseString", argumentCount: 1, pure: true) { dbValues in
@@ -690,7 +726,7 @@ extension DatabaseFunction {
     /// An SQL function that calls the Swift
     /// `String.uppercased()` method.
     ///
-    /// `NULL` is returned for non-strings values.
+    /// `NULL` is returned for non-string values.
     ///
     /// This function is automatically added by GRDB to your database
     /// connections. It is the function used by the query interface's
@@ -698,7 +734,7 @@ extension DatabaseFunction {
     ///
     /// ```swift
     /// let request = Player.select { $0.name.uppercased }
-    /// let names = try String.fetchAll(dbQueue, request) // [String]
+    /// let names = try String.fetchAll(db, request) // [String]
     /// ```
     public static let uppercase =
         DatabaseFunction("swiftUppercaseString", argumentCount: 1, pure: true) { dbValues in
@@ -711,7 +747,7 @@ extension DatabaseFunction {
     /// An SQL function that calls the Foundation
     /// `String.localizedCapitalized` property.
     ///
-    /// `NULL` is returned for non-strings values.
+    /// `NULL` is returned for non-string values.
     ///
     /// This function is automatically added by GRDB to your database
     /// connections. It is the function used by the query interface's
@@ -719,7 +755,7 @@ extension DatabaseFunction {
     ///
     /// ```swift
     /// let request = Player.select { $0.name.localizedCapitalized }
-    /// let names = try String.fetchAll(dbQueue, request) // [String]
+    /// let names = try String.fetchAll(db, request) // [String]
     /// ```
     public static let localizedCapitalize =
         DatabaseFunction("swiftLocalizedCapitalizedString", argumentCount: 1, pure: true) { dbValues in
@@ -733,15 +769,15 @@ extension DatabaseFunction {
     /// An SQL function that calls the Foundation
     /// `String.localizedLowercase` property.
     ///
-    /// `NULL` is returned for non-strings values.
+    /// `NULL` is returned for non-string values.
     ///
     /// This function is automatically added by GRDB to your database
     /// connections. It is the function used by the query interface's
     /// ``SQLSpecificExpressible/localizedLowercased``:
     ///
     /// ```swift
-    /// let request = Player.select { $0.name.localizedLowercase }
-    /// let names = try String.fetchAll(dbQueue, request) // [String]
+    /// let request = Player.select { $0.name.localizedLowercased }
+    /// let names = try String.fetchAll(db, request) // [String]
     /// ```
     public static let localizedLowercase =
         DatabaseFunction("swiftLocalizedLowercaseString", argumentCount: 1, pure: true) { dbValues in
@@ -754,15 +790,15 @@ extension DatabaseFunction {
     /// An SQL function that calls the Foundation
     /// `String.localizedUppercase` property.
     ///
-    /// `NULL` is returned for non-strings values.
+    /// `NULL` is returned for non-string values.
     ///
     /// This function is automatically added by GRDB to your database
     /// connections. It is the function used by the query interface's
     /// ``SQLSpecificExpressible/localizedUppercased``:
     ///
     /// ```swift
-    /// let request = Player.select { $0.name.localizedUppercase }
-    /// let names = try String.fetchAll(dbQueue, request) // [String]
+    /// let request = Player.select { $0.name.localizedUppercased }
+    /// let names = try String.fetchAll(db, request) // [String]
     /// ```
     public static let localizedUppercase =
         DatabaseFunction("swiftLocalizedUppercaseString", argumentCount: 1, pure: true) { dbValues in
@@ -806,7 +842,7 @@ extension DatabaseCollation {
     ///
     /// ```swift
     /// let collationName = DatabaseCollation.unicodeCompare.name
-    /// dbQueue.execute(sql: """
+    /// try db.execute(sql: """
     ///     CREATE TABLE player (
     ///       name TEXT COLLATE \(collationName)
     ///     )
@@ -835,7 +871,7 @@ extension DatabaseCollation {
     ///
     /// ```swift
     /// let collationName = DatabaseCollation.caseInsensitiveCompare.name
-    /// dbQueue.execute(sql: """
+    /// try db.execute(sql: """
     ///     CREATE TABLE player (
     ///       name TEXT COLLATE \(collationName)
     ///     )
@@ -864,7 +900,7 @@ extension DatabaseCollation {
     ///
     /// ```swift
     /// let collationName = DatabaseCollation.localizedCaseInsensitiveCompare.name
-    /// dbQueue.execute(sql: """
+    /// try db.execute(sql: """
     ///     CREATE TABLE player (
     ///       name TEXT COLLATE \(collationName)
     ///     )
@@ -893,7 +929,7 @@ extension DatabaseCollation {
     ///
     /// ```swift
     /// let collationName = DatabaseCollation.localizedCompare.name
-    /// dbQueue.execute(sql: """
+    /// try db.execute(sql: """
     ///     CREATE TABLE player (
     ///       name TEXT COLLATE \(collationName)
     ///     )
@@ -922,7 +958,7 @@ extension DatabaseCollation {
     ///
     /// ```swift
     /// let collationName = DatabaseCollation.localizedStandardCompare.name
-    /// dbQueue.execute(sql: """
+    /// try db.execute(sql: """
     ///     CREATE TABLE player (
     ///       name TEXT COLLATE \(collationName)
     ///     )

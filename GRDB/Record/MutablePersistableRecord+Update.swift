@@ -25,7 +25,7 @@ extension MutablePersistableRecord {
     ///
     /// ```swift
     /// try dbQueue.write { db in
-    ///     var player = Player.find(db, id: 1)
+    ///     var player = try Player.find(db, id: 1)
     ///     player.score += 10
     ///     try player.update(db, columns: ["score"])
     /// }
@@ -66,7 +66,7 @@ extension MutablePersistableRecord {
     ///
     /// ```swift
     /// try dbQueue.write { db in
-    ///     var player = Player.find(db, id: 1)
+    ///     var player = try Player.find(db, id: 1)
     ///     player.score += 10
     ///     try player.update(db, columns: [Column("score")])
     /// }
@@ -96,7 +96,7 @@ extension MutablePersistableRecord {
     ///
     /// ```swift
     /// try dbQueue.write { db in
-    ///     var player = Player.find(db, id: 1)
+    ///     var player = try Player.find(db, id: 1)
     ///     player.score += 10
     ///     try player.update(db)
     /// }
@@ -129,7 +129,7 @@ extension MutablePersistableRecord {
     ///
     /// ```swift
     /// try dbQueue.write { db in
-    ///     if let oldPlayer = Player.fetchOne(db, id: 1) {
+    ///     if let oldPlayer = try Player.fetchOne(db, id: 1) {
     ///         var newPlayer = oldPlayer
     ///         newPlayer.score = 1000
     ///         newPlayer.hasAward = true
@@ -153,7 +153,7 @@ extension MutablePersistableRecord {
     ///   error thrown by the persistence callbacks defined by the record type,
     ///   or ``RecordError/recordNotFound(databaseTableName:key:)`` if the
     ///   primary key does not match any row in the database.
-    /// - SeeAlso: updateChanges(_:with:)
+    /// - SeeAlso: ``updateChanges(_:onConflict:modify:)``
     @discardableResult
     @inlinable // allow specialization so that empty callbacks are removed
     public func updateChanges<Record: MutablePersistableRecord>(
@@ -173,7 +173,7 @@ extension MutablePersistableRecord {
     ///
     /// ```swift
     /// try dbQueue.write { db in
-    ///     var player = Player.find(db, id: 1)
+    ///     var player = try Player.find(db, id: 1)
     ///     let modified = try player.updateChanges(db) {
     ///         $0.score = 1000
     ///         $0.hasAward = true
@@ -345,7 +345,7 @@ extension MutablePersistableRecord {
     /// try dbQueue.write { db in
     ///     // UPDATE player SET score = ... RETURNING totalScore
     ///     let totalScore = try player.updateAndFetch(
-    ///         db, columns: ["Score"],
+    ///         db, columns: ["score"],
     ///         selection: [Column("totalScore")],
     ///         fetch: { statement in
     ///             try Int.fetchOne(statement)
@@ -359,7 +359,7 @@ extension MutablePersistableRecord {
     ///   is used.
     /// - parameter columns: The columns to update.
     /// - parameter selection: The returned columns (must not be empty).
-    /// - parameter fetch: A function that executes it ``Statement`` argument.
+    /// - parameter fetch: A function that executes its ``Statement`` argument.
     /// - returns: The result of the `fetch` function.
     /// - throws: A ``DatabaseError`` whenever an SQLite error occurs, or any
     ///   error thrown by the persistence callbacks defined by the record type,
@@ -404,7 +404,7 @@ extension MutablePersistableRecord {
     /// try dbQueue.write { db in
     ///     // UPDATE player SET score = ... RETURNING totalScore
     ///     let totalScore = try player.updateAndFetch(
-    ///         db, columns: [Column("Score")],
+    ///         db, columns: [Column("score")],
     ///         selection: [Column("totalScore")],
     ///         fetch: { statement in
     ///             try Int.fetchOne(statement)
@@ -418,7 +418,7 @@ extension MutablePersistableRecord {
     ///   is used.
     /// - parameter columns: The columns to update.
     /// - parameter selection: The returned columns (must not be empty).
-    /// - parameter fetch: A function that executes it ``Statement`` argument.
+    /// - parameter fetch: A function that executes its ``Statement`` argument.
     /// - returns: The result of the `fetch` function.
     /// - throws: A ``DatabaseError`` whenever an SQLite error occurs, or any
     ///   error thrown by the persistence callbacks defined by the record type,
@@ -459,7 +459,7 @@ extension MutablePersistableRecord {
     ///   nil, <doc:/MutablePersistableRecord/persistenceConflictPolicy-1isyv>
     ///   is used.
     /// - parameter selection: The returned columns (must not be empty).
-    /// - parameter fetch: A function that executes it ``Statement`` argument.
+    /// - parameter fetch: A function that executes its ``Statement`` argument.
     /// - returns: The result of the `fetch` function.
     /// - throws: A ``DatabaseError`` whenever an SQLite error occurs, or any
     ///   error thrown by the persistence callbacks defined by the record type,
@@ -493,7 +493,7 @@ extension MutablePersistableRecord {
     ///   nil, <doc:/MutablePersistableRecord/persistenceConflictPolicy-1isyv>
     ///   is used.
     /// - parameter selection: The returned columns (must not be empty).
-    /// - parameter fetch: A function that executes it ``Statement`` argument.
+    /// - parameter fetch: A function that executes its ``Statement`` argument.
     /// - parameter modify: A closure that modifies the record.
     /// - returns: The result of the `fetch` function, or nil if the record 
     ///   has no change.
@@ -655,7 +655,7 @@ extension MutablePersistableRecord {
     /// try dbQueue.write { db in
     ///     // UPDATE player SET score = ... RETURNING totalScore
     ///     let totalScore = try player.updateAndFetch(
-    ///         db, columns: ["Score"],
+    ///         db, columns: ["score"],
     ///         selection: [Column("totalScore")],
     ///         fetch: { statement in
     ///             try Int.fetchOne(statement)
@@ -669,7 +669,7 @@ extension MutablePersistableRecord {
     ///   is used.
     /// - parameter columns: The columns to update.
     /// - parameter selection: The returned columns (must not be empty).
-    /// - parameter fetch: A function that executes it ``Statement`` argument.
+    /// - parameter fetch: A function that executes its ``Statement`` argument.
     /// - returns: The result of the `fetch` function.
     /// - throws: A ``DatabaseError`` whenever an SQLite error occurs, or any
     ///   error thrown by the persistence callbacks defined by the record type,
@@ -715,7 +715,7 @@ extension MutablePersistableRecord {
     /// try dbQueue.write { db in
     ///     // UPDATE player SET score = ... RETURNING totalScore
     ///     let totalScore = try player.updateAndFetch(
-    ///         db, columns: [Column("Score")],
+    ///         db, columns: [Column("score")],
     ///         selection: [Column("totalScore")],
     ///         fetch: { statement in
     ///             try Int.fetchOne(statement)
@@ -729,7 +729,7 @@ extension MutablePersistableRecord {
     ///   is used.
     /// - parameter columns: The columns to update.
     /// - parameter selection: The returned columns (must not be empty).
-    /// - parameter fetch: A function that executes it ``Statement`` argument.
+    /// - parameter fetch: A function that executes its ``Statement`` argument.
     /// - returns: The result of the `fetch` function.
     /// - throws: A ``DatabaseError`` whenever an SQLite error occurs, or any
     ///   error thrown by the persistence callbacks defined by the record type,
@@ -771,7 +771,7 @@ extension MutablePersistableRecord {
     ///   nil, <doc:/MutablePersistableRecord/persistenceConflictPolicy-1isyv>
     ///   is used.
     /// - parameter selection: The returned columns (must not be empty).
-    /// - parameter fetch: A function that executes it ``Statement`` argument.
+    /// - parameter fetch: A function that executes its ``Statement`` argument.
     /// - returns: The result of the `fetch` function.
     /// - throws: A ``DatabaseError`` whenever an SQLite error occurs, or any
     ///   error thrown by the persistence callbacks defined by the record type,
@@ -806,7 +806,7 @@ extension MutablePersistableRecord {
     ///   nil, <doc:/MutablePersistableRecord/persistenceConflictPolicy-1isyv>
     ///   is used.
     /// - parameter selection: The returned columns (must not be empty).
-    /// - parameter fetch: A function that executes it ``Statement`` argument.
+    /// - parameter fetch: A function that executes its ``Statement`` argument.
     /// - parameter modify: A closure that modifies the record.
     /// - returns: The result of the `fetch` function, or nil if the record
     ///   has no change.

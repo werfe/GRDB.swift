@@ -126,7 +126,7 @@ extension MutablePersistableRecord {
     /// Executes an `INSERT RETURNING` statement, and returns a new record built
     /// from the inserted row.
     ///
-    /// This method helps dealing with default column values and
+    /// This method helps deal with default column values and
     /// generated columns.
     ///
     /// For example:
@@ -160,7 +160,7 @@ extension MutablePersistableRecord {
     ///     var partialPlayer = PartialPlayer(name: "Alice")
     ///
     ///     // INSERT INTO player (name) VALUES ('Alice') RETURNING *
-    ///     let player = try partialPlayer.insertAndFetch(db, as: FullPlayer.self)
+    ///     let player = try partialPlayer.insertAndFetch(db, as: Player.self)
     ///     print(player.id)    // The inserted id
     ///     print(player.name)  // The inserted name
     ///     print(player.score) // The default score
@@ -196,7 +196,7 @@ extension MutablePersistableRecord {
     /// Executes an `INSERT RETURNING` statement, and returns the selected
     /// columns from the inserted row.
     ///
-    /// This method helps dealing with default column values and
+    /// This method helps deal with default column values and
     /// generated columns.
     ///
     /// For example:
@@ -272,7 +272,7 @@ extension MutablePersistableRecord {
     /// Executes an `INSERT RETURNING` statement, and returns the selected
     /// columns from the inserted row.
     ///
-    /// This method helps dealing with default column values and
+    /// This method helps deal with default column values and
     /// generated columns.
     ///
     /// For example:
@@ -372,7 +372,7 @@ extension MutablePersistableRecord {
     /// Executes an `INSERT RETURNING` statement, and returns a new record built
     /// from the inserted row.
     ///
-    /// This method helps dealing with default column values and
+    /// This method helps deal with default column values and
     /// generated columns.
     ///
     /// For example:
@@ -406,7 +406,7 @@ extension MutablePersistableRecord {
     ///     var partialPlayer = PartialPlayer(name: "Alice")
     ///
     ///     // INSERT INTO player (name) VALUES ('Alice') RETURNING *
-    ///     let player = try partialPlayer.insertAndFetch(db, as: FullPlayer.self)
+    ///     let player = try partialPlayer.insertAndFetch(db, as: Player.self)
     ///     print(player.id)    // The inserted id
     ///     print(player.name)  // The inserted name
     ///     print(player.score) // The default score
@@ -443,7 +443,7 @@ extension MutablePersistableRecord {
     /// Executes an `INSERT RETURNING` statement, and returns the selected
     /// columns from the inserted row.
     ///
-    /// This method helps dealing with default column values and
+    /// This method helps deal with default column values and
     /// generated columns.
     ///
     /// For example:
@@ -520,7 +520,7 @@ extension MutablePersistableRecord {
     /// Executes an `INSERT RETURNING` statement, and returns the selected
     /// columns from the inserted row.
     ///
-    /// This method helps dealing with default column values and
+    /// This method helps deal with default column values and
     /// generated columns.
     ///
     /// For example:

@@ -126,13 +126,13 @@ let request = Player
     .filter { $0.name == playerNameCTE.all() }
 ```
 
-> **Note**: the `with(_:)` method can be called as many times as a there are common table expressions in your request.
+> **Note**: the `with(_:)` method can be called as many times as there are common table expressions in your request.
 >
-> **Note**: the `with(_:)` method can be called at any time, as all request methods: `Player.with(...).filter(...).with(...)`.
+> **Note**: the `with(_:)` method can be called at any time, like all request methods: `Player.with(...).filter(...).with(...)`.
 >
 > **Note**: the `with(_:)` method replaces any previously embedded CTE that has the same table name. This allows you to embed the same CTE several times if you feel like it.
 >
-> **Note**: the `CommonTableExpression.all()` method builds a regular [query interface request] for the content of the CTE (like `SELECT * FROM <cte name>`, not to be mismatched with the request that was used to define the CTE). You can filter this request, sort it, etc, like all query interface requests:
+> **Note**: the `CommonTableExpression.all()` method builds a regular [query interface request] for the content of the CTE (like `SELECT * FROM <cte name>`, not to be confused with the request that was used to define the CTE). You can filter this request, sort it, etc, like all query interface requests:
 >
 > ```swift
 > cte.all().select(...).filter(...).group(...).order(...)
@@ -270,7 +270,7 @@ LeftRecord
 
 ### CTE Association Example: a Chat App
 
-As an example, let's build the classical main screen of a chat application: a list of all latest messages from all conversations.
+As an example, let's build the classic main screen of a chat application: a list of all latest messages from all conversations.
 
 The database schema of the chat app contains a `chat` and a `message` table. The application defines the following records:
 
@@ -368,7 +368,7 @@ And we can fetch the data that feeds our application screen:
 
 ```swift
 
-let chatInfos: [ChatInfos] = try dbQueue.read { db in
+let chatInfos: [ChatInfo] = try dbQueue.read { db in
     try request.fetchAll(db)
 }
 ```
@@ -395,8 +395,8 @@ let chatInfos: [ChatInfos] = try dbQueue.read { db in
 > // JOIN far ON ...
 > let request = BaseRecord
 >     .with(cte1).with(cte2)
->     .joining(required: assoc1.                     // OK
->         .joining(required: assoc2.                 // OK
+>     .joining(required: assoc1                      // OK
+>         .joining(required: assoc2                  // OK
 >             .joining(required: assoc3)))           // OK
 >
 > // Compiler error

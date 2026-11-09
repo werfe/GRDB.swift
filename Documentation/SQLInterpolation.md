@@ -40,7 +40,7 @@ try dbQueue.write { db in
 }
 ```
 
-SQL interpolation looks and feel just like regular [String interpolation]:
+SQL interpolation looks and feels just like regular [String interpolation]:
 
 ```swift
 let name = "World"
@@ -84,7 +84,7 @@ try dbQueue.write { db in
 }
 ```
 
-**`SQL` is not a Swift String.** You can not use the `execute(literal:)` method with a String argument:
+**`SQL` is not a Swift String.** You cannot use the `execute(literal:)` method with a String argument:
 
 ```swift
 try dbQueue.write { db in
@@ -131,7 +131,7 @@ let query = SQL(
     arguments: [name, id])
 ```
 
-`SQL` can embed any [value], as we have seen above, but not only. Please keep on reading the next chapter, or jump directly to the [SQL Interpolation Reference].
+`SQL` can embed any [value], as we have seen above, and more. Please keep on reading the next chapter, or jump directly to the [SQL Interpolation Reference].
 
 
 ## SQL Interpolation and the Query Interface
@@ -183,7 +183,7 @@ let request = Player.filter { date($0.createdAt) == "2020-01-23" }
 
 The [record protocols] extend your application types with database abilities.
 
-**A record type knows everything about the schema of its underlying database table**. With the [TableRecord] protocol, the `databaseTableName` property contains the table name. With the [Decodable] protocol, the [CodingKeys] enum contain the column names. And with [FetchableRecord], you can decode raw database rows.
+**A record type knows everything about the schema of its underlying database table**. With the [TableRecord] protocol, the `databaseTableName` property contains the table name. With the [Decodable] protocol, the [CodingKeys] enum contains the column names. And with [FetchableRecord], you can decode raw database rows.
 
 SQL Interpolation puts this knowledge to good use, so that you can build robust queries that consistently use correct table and column names. Let's start from this record:
 
@@ -203,7 +203,7 @@ Let's extend Player with database methods.
     
     ```swift
     extension Player {
-        /// Deletes all player with no score
+        /// Deletes all players with no score
         static func deleteAllWithoutScore(_ db: Database) throws {
             try db.execute(literal: "DELETE FROM \(self) WHERE \(CodingKeys.score) IS NULL")
         }
@@ -247,12 +247,12 @@ Let's extend Player with database methods.
     
     ```swift
     let player = try dbQueue.read { db in
-        // SELECT * player WHERE id = 42
+        // SELECT * FROM player WHERE id = 42
         try Player.filter(id: 42).fetchOne(db) // Player?
     }
     ```
     
-    The return type of this method is `SQLRequest<Player>`. It is one of the GRDB [request types]. It profits from SQL interpolation, and this is why this method simply returns an "SQL literal"".
+    The return type of this method is `SQLRequest<Player>`. It is one of the GRDB [request types]. It profits from SQL interpolation, and this is why this method simply returns an "SQL literal".
     
     The first "simple" version only embeds the `\(id)` [value].
     
@@ -357,7 +357,7 @@ Let's extend Player with database methods.
     }
     ```
     
-    This last request shows how to build an SQLRequest from an [SQL Literal]. You will need `SQL` when the request can not be written in a single stroke.
+    This last request shows how to build an SQLRequest from an [SQL Literal]. You will need `SQL` when the request cannot be written in a single stroke.
 
 
 
@@ -477,7 +477,7 @@ This chapter lists all kinds of supported interpolations.
     "SELECT * FROM player WHERE \(literal: condition)"
     ```
 
-- Plain SQL strings and eventual arguments:
+- Plain SQL strings and optional arguments:
 
     ```swift
     // SELECT * FROM player

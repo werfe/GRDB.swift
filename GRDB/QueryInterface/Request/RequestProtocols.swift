@@ -44,7 +44,7 @@ public protocol SelectionRequest {
     ///
     /// The `selection` parameter is a closure that accepts a database
     /// connection and returns an array of result columns. It is evaluated when
-    /// the request has an access to the database, and can perform database
+    /// the request has access to the database, and can perform database
     /// requests in order to build its result.
     ///
     /// For example:
@@ -75,7 +75,7 @@ public protocol SelectionRequest {
     ///
     /// The `selection` parameter is a closure that accepts a database
     /// connection and returns an array of result columns. It is evaluated when
-    /// the request has an access to the database, and can perform database
+    /// the request has access to the database, and can perform database
     /// requests in order to build its result.
     ///
     /// For example:
@@ -156,7 +156,7 @@ extension SelectionRequest {
     /// Any previous selection is discarded:
     ///
     /// ```swift
-    /// // SELECT score FROM player
+    /// // SELECT name FROM player
     /// let request = Player.all()
     ///     .select(sql: "id")
     ///     .select(sql: "name")
@@ -362,7 +362,7 @@ public protocol FilteredRequest {
     ///
     /// The `predicate` parameter is a closure that accepts a database
     /// connection and returns a boolean SQL expression. It is evaluated when
-    /// the request has an access to the database, and can perform database
+    /// the request has access to the database, and can perform database
     /// requests in order to build its result.
     ///
     /// For example:
@@ -471,11 +471,11 @@ extension FilteredRequest where Self: TypedRequest, Self.RowDecoder: TableRecord
 
 // MARK: - TableRequest
 
-/// A request that feeds from a database table
+/// A request that fetches from a database table
 ///
 /// ## Topics
 ///
-/// ## The Database Table
+/// ### The Database Table
 ///
 /// - ``databaseTableName``
 ///
@@ -673,10 +673,10 @@ extension TableRequest where Self: FilteredRequest, Self: TypedRequest {
     /// All single-column primary keys are supported:
     ///
     /// ```swift
-    /// // SELECT * FROM player WHERE id = IN (1, 2, 3)
+    /// // SELECT * FROM player WHERE id IN (1, 2, 3)
     /// let request = Player.all().filter(keys: [1, 2, 3])
     ///
-    /// // SELECT * FROM country WHERE code = IN ('FR', 'US')
+    /// // SELECT * FROM country WHERE code IN ('FR', 'US')
     /// let request = Country.all().filter(keys: ["FR", "US"])
     /// ```
     ///
@@ -891,10 +891,10 @@ where Self: FilteredRequest,
     /// All single-column primary keys are supported:
     ///
     /// ```swift
-    /// // SELECT * FROM player WHERE id = IN (1, 2, 3)
+    /// // SELECT * FROM player WHERE id IN (1, 2, 3)
     /// let request = Player.all().filter(ids: [1, 2, 3])
     ///
-    /// // SELECT * FROM country WHERE code = IN ('FR', 'US')
+    /// // SELECT * FROM country WHERE code IN ('FR', 'US')
     /// let request = Country.all().filter(ids: ["FR", "US"])
     /// ```
     ///
@@ -996,7 +996,7 @@ public protocol AggregatingRequest {
     ///
     /// The `expressions` parameter is a closure that accepts a database
     /// connection and returns an array of grouping SQL expressions. It is
-    /// evaluated when the request has an access to the database, and can
+    /// evaluated when the request has access to the database, and can
     /// perform database requests in order to build its result.
     ///
     /// For example:
@@ -1022,7 +1022,7 @@ public protocol AggregatingRequest {
     ///
     /// The `predicate` parameter is a closure that accepts a database
     /// connection and returns a boolean SQL expression. It is evaluated when
-    /// the request has an access to the database, and can perform database
+    /// the request has access to the database, and can perform database
     /// requests in order to build its result.
     ///
     /// For example:
@@ -1274,7 +1274,7 @@ public protocol OrderedRequest {
     ///
     /// The `orderings` parameter is a closure that accepts a database
     /// connection and returns an array of SQL ordering terms. It is evaluated
-    /// when the request has an access to the database, and can perform database
+    /// when the request has access to the database, and can perform database
     /// requests in order to build its result.
     ///
     /// For example:
@@ -1344,7 +1344,7 @@ public protocol OrderedRequest {
     
     /// Returns a request with a stable order.
     ///
-    /// The returned request lifts ordering ambiguities and always return
+    /// The returned request resolves ordering ambiguities and always returns
     /// its results in the same order.
     ///
     /// The purpose of this method is to make requests testable.
@@ -1576,10 +1576,10 @@ extension JoinableRequest {
         _including(all: association._sqlAssociation)
     }
     
-    /// Returns a request that fetches the eventual record associated with each
+    /// Returns a request that fetches the optional record associated with each
     /// record of this request.
     ///
-    /// For example, we can fetch books along with their eventual author:
+    /// For example, we can fetch books along with their optional author:
     ///
     /// ```swift
     /// struct Author: TableRecord, FetchableRecord, Decodable { }
@@ -1605,7 +1605,7 @@ extension JoinableRequest {
     /// this request. Records that do not have an associated record
     /// are discarded.
     ///
-    /// For example, we can fetch books along with their eventual author:
+    /// For example, we can fetch books along with their author:
     ///
     /// ```swift
     /// struct Author: TableRecord, FetchableRecord, Decodable { }
@@ -1628,7 +1628,7 @@ extension JoinableRequest {
     }
     
     /// Returns a request that joins each record of this request to its
-    /// eventual associated record.
+    /// optional associated record.
     public func joining<A: Association>(optional association: A) -> Self where A.OriginRowDecoder == RowDecoder {
         _joining(optional: association._sqlAssociation)
     }
@@ -1661,7 +1661,7 @@ extension JoinableRequest {
 }
 
 extension JoinableRequest where Self: SelectionRequest {
-    /// Appends the columns of the eventual associated record to the
+    /// Appends the columns of the optional associated record to the
     /// selected columns.
     ///
     /// For example:
@@ -1669,7 +1669,7 @@ extension JoinableRequest where Self: SelectionRequest {
     /// ```swift
     /// struct Team: TableRecord {
     ///     enum Columns {
-    ///         static let countryCode = Column("countryCode")
+    ///         static let color = Column("color")
     ///     }
     /// }
     ///
@@ -1769,7 +1769,7 @@ extension JoinableRequest where Self: SelectionRequest {
     /// ```swift
     /// let teamAlias = TableAlias<Team>()
     /// let request = Player.all()
-    ///     .annotated(with: teamAlias.color])
+    ///     .annotated(with: teamAlias.color)
     ///     .joining(required: Player.team.aliased(teamAlias))
     /// ```
     public func annotated<A: Association>(withRequired association: A) -> Self where A.OriginRowDecoder == RowDecoder {

@@ -183,7 +183,7 @@ extension SQLJSONExpressible {
     /// Related SQL documentation: <https://www.sqlite.org/json1.html#jptr>
     ///
     /// - parameter path: A [JSON path](https://www.sqlite.org/json1.html#path_arguments),
-    ///   or an JSON object field label, or an array index.
+    ///   or a JSON object field label, or an array index.
     public subscript(_ path: some SQLExpressible) -> SQLExpression {
         .binary(.jsonExtractSQL, sqlExpression, path.sqlExpression)
     }
@@ -265,7 +265,7 @@ extension SQLJSONExpressible {
     ///
     /// // SELECT info -> 'address' FROM player
     /// // → '{"street":"Rue de Belleville","city":"Paris"}'
-    /// let name = try Player
+    /// let address = try Player
     ///     .select({ $0.info.jsonRepresentation(atPath: "address") }, as: String.self)
     ///     .fetchOne(db)
     /// ```
@@ -273,7 +273,7 @@ extension SQLJSONExpressible {
     /// Related SQL documentation: <https://www.sqlite.org/json1.html#jptr>
     ///
     /// - parameter path: A [JSON path](https://www.sqlite.org/json1.html#path_arguments),
-    ///   or an JSON object field label, or an array index.
+    ///   or a JSON object field label, or an array index.
     public func jsonRepresentation(atPath path: some SQLExpressible) -> SQLExpression {
         .binary(.jsonExtractJSON, sqlExpression, path.sqlExpression)
     }
@@ -307,7 +307,7 @@ extension SQLJSONExpressible {
     /// Related SQL documentation: <https://www.sqlite.org/json1.html#jptr>
     ///
     /// - parameter path: A [JSON path](https://www.sqlite.org/json1.html#path_arguments),
-    ///   or an JSON object field label, or an array index.
+    ///   or a JSON object field label, or an array index.
     @available(iOS 16, macOS 13.2, tvOS 17, watchOS 9, *) // SQLite 3.38+
     public subscript(_ path: some SQLExpressible) -> SQLExpression {
         .binary(.jsonExtractSQL, sqlExpression, path.sqlExpression)
@@ -392,7 +392,7 @@ extension SQLJSONExpressible {
     ///
     /// // SELECT info -> 'address' FROM player
     /// // → '{"street":"Rue de Belleville","city":"Paris"}'
-    /// let name = try Player
+    /// let address = try Player
     ///     .select({ $0.info.jsonRepresentation(atPath: "address") }, as: String.self)
     ///     .fetchOne(db)
     /// ```
@@ -400,7 +400,7 @@ extension SQLJSONExpressible {
     /// Related SQL documentation: <https://www.sqlite.org/json1.html#jptr>
     ///
     /// - parameter path: A [JSON path](https://www.sqlite.org/json1.html#path_arguments),
-    ///   or an JSON object field label, or an array index.
+    ///   or a JSON object field label, or an array index.
     @available(iOS 16, macOS 13.2, tvOS 17, watchOS 9, *) // SQLite 3.38+
     public func jsonRepresentation(atPath path: some SQLExpressible) -> SQLExpression {
         .binary(.jsonExtractJSON, sqlExpression, path.sqlExpression)

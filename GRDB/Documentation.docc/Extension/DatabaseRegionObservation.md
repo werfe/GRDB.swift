@@ -4,7 +4,7 @@
 
 ## Overview
 
-`DatabaseRegionObservation` tracks insertions, updates, and deletions that impact the tracked region, whether performed with raw SQL, or <doc:QueryInterface>. This includes indirect changes triggered by [foreign keys actions](https://www.sqlite.org/foreignkeys.html#fk_actions) or [SQL triggers](https://www.sqlite.org/lang_createtrigger.html).
+`DatabaseRegionObservation` tracks insertions, updates, and deletions that impact the tracked region, whether performed with raw SQL, or <doc:QueryInterface>. This includes indirect changes triggered by [foreign key actions](https://www.sqlite.org/foreignkeys.html#fk_actions) or [SQL triggers](https://www.sqlite.org/lang_createtrigger.html).
 
 See <doc:GRDB/DatabaseRegionObservation#Dealing-with-Undetected-Changes> below for the list of exceptions.
 
@@ -22,14 +22,14 @@ let observation = DatabaseRegionObservation(tracking: Player.all())
 Then start the observation from a ``DatabaseQueue`` or ``DatabasePool``:
 
 ```swift
-let cancellable = try observation.start(in: dbQueue) { error in
+let cancellable = observation.start(in: dbQueue) { error in
     // Handle error
 } onChange: { (db: Database) in
     print("Players were changed")
 }
 ```
 
-Enjoy the changes notifications:
+Enjoy the change notifications:
 
 ```swift
 try dbQueue.write { db in

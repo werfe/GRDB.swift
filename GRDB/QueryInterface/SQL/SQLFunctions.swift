@@ -82,8 +82,8 @@ public func cast(_ expression: some SQLSpecificExpressible, as storageClass: Dat
 ///
 /// Unlike the SQL function, `coalesce` accepts any number of arguments.
 /// When `values` is empty, the result is `NULL`. When `values` contains a
-/// single value, the result is this value. `COALESCE` is used from
-/// two values upwards.
+/// single value, the result is this value. `COALESCE` is used for
+/// two or more values.
 public func coalesce(_ values: some Collection<any SQLSpecificExpressible>) -> SQLExpression {
     // SQLite COALESCE wants at least two arguments.
     // There is no reason to apply the same limitation.
@@ -367,7 +367,7 @@ public func total(
 /// total(Column("amount"), filter: Column("amount") > 0)
 /// ```
 ///
-/// See also ``total(_:)``.
+/// See also ``sum(_:)``.
 ///
 /// Related SQLite documentation: <https://www.sqlite.org/lang_aggfunc.html#sumunc>.
 @available(iOS 14, macOS 10.16, tvOS 14, *) // SQLite 3.30+
@@ -587,7 +587,7 @@ public func julianDay(_ value: some SQLSpecificExpressible, _ modifiers: SQLDate
 /// dateTime(Column("date"), .day(1))
 /// ```
 ///
-/// Related SQLite documentation:<https://www.sqlite.org/lang_datefunc.html>
+/// Related SQLite documentation: <https://www.sqlite.org/lang_datefunc.html>
 public func dateTime(_ value: some SQLSpecificExpressible, _ modifiers: SQLDateModifier...) -> SQLExpression {
     .function("DATETIME", [value.sqlExpression] + modifiers.map(\.sqlExpression))
 }

@@ -235,7 +235,7 @@ final class SerializedDatabase {
         }
     }
     
-    /// Returns true if any only if the current dispatch queue is valid.
+    /// Returns true if and only if the current dispatch queue is valid.
     var onValidQueue: Bool {
         SchedulingWatchdog.current?.allows(db) ?? false
     }
@@ -248,7 +248,7 @@ final class SerializedDatabase {
         return try block(db)
     }
     
-    /// Asynchrously executes the block.
+    /// Asynchronously executes the block.
     func execute<T: Sendable>(
         _ block: @Sendable (Database) throws -> T
     ) async throws -> T {
@@ -293,10 +293,10 @@ final class SerializedDatabase {
         SchedulingWatchdog.preconditionValidQueue(db, message(), file: file, line: line)
     }
     
-    /// Fatal error if a transaction has been left opened.
+    /// Fatal error if a transaction has been left open.
     private func preconditionNoUnsafeTransactionLeft(
         _ db: Database,
-        _ message: @autoclosure() -> String = "A transaction has been left opened at the end of a database access",
+        _ message: @autoclosure() -> String = "A transaction has been left open at the end of a database access",
         file: StaticString = #file,
         line: UInt = #line)
     {

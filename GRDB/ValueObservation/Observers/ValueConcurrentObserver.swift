@@ -112,7 +112,7 @@ where Reducer: ValueReducer,
         /// Waiting for a fetched value.
         case fetching
         
-        /// Waiting for a fetched value, and for a subsequent  fetch after
+        /// Waiting for a fetched value, and for a subsequent fetch after
         /// that, because a change has been detected as we were fetching.
         case fetchingAndNeedsFetch
     }
@@ -284,7 +284,7 @@ extension ValueConcurrentObserver {
     private func syncStart(from databaseAccess: DatabaseAccess) throws -> Reducer.Value {
         // Start from a read access. The whole point of using a DatabasePool
         // for observing the database is to be able to fetch the initial value
-        // without having to wait for an eventual long-running write
+        // without having to wait for a possible long-running write
         // transaction to complete.
         //
         // We perform the initial read from a long-lived WAL snapshot
@@ -341,7 +341,7 @@ extension ValueConcurrentObserver {
     private func asyncStart(from databaseAccess: DatabaseAccess) {
         // Start from a read access. The whole point of using a DatabasePool
         // for observing the database is to be able to fetch the initial value
-        // without having to wait for an eventual long-running write
+        // without having to wait for a possible long-running write
         // transaction to complete.
         //
         // We perform the initial read from a long-lived WAL snapshot
@@ -452,8 +452,15 @@ extension ValueConcurrentObserver {
                     let isModified: Bool
                     if let currentWALSnapshot = try? WALSnapshot(writerDB) {
                         let ordering = initialFetchTransaction.walSnapshot.compare(currentWALSnapshot)
-                        assert(ordering <= 0, "Unexpected snapshot ordering")
-                        isModified = ordering < 0
+                        // We expect `ordering <= 0`, since the current
+                        // snapshot is captured after the snapshot of the
+                        // initial fetch. The current one is supposed to be
+                        // identical (no change), or newer (database was
+                        // changed since initial fetch). Yet SQLite has
+                        // a quirk, as revealed by <https://github.com/groue/GRDB.swift/issues/1883>
+                        // That's why we just check for a difference, and do
+                        // not `assert(ordering <= 0)`.
+                        isModified = ordering != 0
                     } else {
                         // Can't compare: assume the database was modified.
                         isModified = true
@@ -543,7 +550,7 @@ extension ValueConcurrentObserver {
     private func syncStartWithoutWALSnapshot(from databaseAccess: DatabaseAccess) throws -> Reducer.Value {
         // Start from a read access. The whole point of using a DatabasePool
         // for observing the database is to be able to fetch the initial value
-        // without having to wait for an eventual long-running write
+        // without having to wait for a possible long-running write
         // transaction to complete.
         let fetchedValue: Reducer.Fetcher.Value
         let initialRegion: DatabaseRegion
@@ -584,7 +591,7 @@ extension ValueConcurrentObserver {
     private func asyncStartWithoutWALSnapshot(from databaseAccess: DatabaseAccess) {
         // Start from a read access. The whole point of using a DatabasePool
         // for observing the database is to be able to fetch the initial value
-        // without having to wait for an eventual long-running write
+        // without having to wait for a possible long-running write
         // transaction to complete.
         databaseAccess.dbPool.asyncRead { dbResult in
             let isNotifying = self.lock.synchronized { self.notificationCallbacks != nil }

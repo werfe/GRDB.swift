@@ -37,13 +37,13 @@ import Foundation
 /// // ]
 /// let encoder = JSONDumpFormat.defaultEncoder
 /// encoder.outputFormatting = .prettyPrinted
-/// try db.dumpRequest(Player.all(), format: .json(encoder))
+/// try db.dumpRequest(Player.all(), format: .json(encoder: encoder))
 /// ```
 public struct JSONDumpFormat: Sendable {
     /// The default `JSONEncoder` for database values.
     ///
     /// It is configured so that blob values (`Data`) are encoded in the
-    /// base64 format, and Non-conforming floats are encoded as "inf",
+    /// base64 format, and non-conforming floats are encoded as "inf",
     /// "-inf" and "nan".
     ///
     /// It uses the output formatting option
@@ -72,7 +72,7 @@ public struct JSONDumpFormat: Sendable {
     /// Creates a `JSONDumpFormat`.
     ///
     /// - Parameter encoder: The JSONEncoder that formats individual
-    ///   database values. If the outputFormatting` options contain
+    ///   database values. If the `outputFormatting` options contain
     ///   `.prettyPrinted`, the printed array has one value per line.
     public init(encoder: JSONEncoder = JSONDumpFormat.defaultEncoder) {
         self.encoder = encoder
@@ -199,11 +199,11 @@ extension DumpFormat where Self == JSONDumpFormat {
     /// // ]
     /// let encoder = JSONDumpFormat.defaultEncoder
     /// encoder.outputFormatting = .prettyPrinted
-    /// try db.dumpRequest(Player.all(), format: .json(encoder))
+    /// try db.dumpRequest(Player.all(), format: .json(encoder: encoder))
     /// ```
     ///
     /// - Parameter encoder: The JSONEncoder that formats individual
-    ///   database values. If the outputFormatting` options contain
+    ///   database values. If the `outputFormatting` options contain
     ///   `.prettyPrinted`, the printed array has one value per line.
     public static func json(encoder: JSONEncoder = JSONDumpFormat.defaultEncoder) -> Self {
         JSONDumpFormat(encoder: encoder)

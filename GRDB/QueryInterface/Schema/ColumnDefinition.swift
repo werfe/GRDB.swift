@@ -1,7 +1,7 @@
 /// Describes a database column.
 ///
 /// You get instances of `ColumnDefinition` when you create or alter a database
-/// tables. For example:
+/// table. For example:
 ///
 /// ```swift
 /// try db.create(table: "player") { t in
@@ -267,7 +267,7 @@ public final class ColumnDefinition {
     ///
     /// ```swift
     /// // CREATE TABLE player(
-    /// //   email TEXT DEFAULT 'Anonymous'
+    /// //   name TEXT DEFAULT 'Anonymous'
     /// // )
     /// try db.create(table: "player") { t in
     ///     t.column("name", .text).defaults(to: "Anonymous")
@@ -293,7 +293,7 @@ public final class ColumnDefinition {
     /// //   creationDate DATETIME DEFAULT CURRENT_TIMESTAMP
     /// // )
     /// try db.create(table: "player") { t in
-    ///     t.column("creationDate", .DateTime).defaults(sql: "CURRENT_TIMESTAMP")
+    ///     t.column("creationDate", .datetime).defaults(sql: "CURRENT_TIMESTAMP")
     /// }
     /// ```
     ///

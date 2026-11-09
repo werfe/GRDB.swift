@@ -8,7 +8,7 @@ You can think of migrations as being 'versions' of the database. A database sche
 
 GRDB can update the database schema along this timeline, bringing it from whatever point it is in the history to the latest version. When a user upgrades your application, only non-applied migrations are run.
 
-You setup migrations in a ``DatabaseMigrator`` instance. For example:
+You set up migrations in a ``DatabaseMigrator`` instance. For example:
 
 ```swift
 var migrator = DatabaseMigrator()
@@ -74,11 +74,11 @@ try dbQueue.read { db in
 }
 ```
 
-**Each migration runs in a separate transaction.** Should one throw an error, its transaction is rollbacked, subsequent migrations do not run, and the error is eventually thrown by ``DatabaseMigrator/migrate(_:)``.
+**Each migration runs in a separate transaction.** Should one throw an error, its transaction is rolled back, subsequent migrations do not run, and the error is eventually thrown by ``DatabaseMigrator/migrate(_:)``.
 
-**Migrations run with deferred foreign key checks.** This means that eventual foreign key violations are only checked at the end of the migration (and they make the migration fail). See <doc:Migrations#Foreign-Key-Checks> below for more information.
+**Migrations run with deferred foreign key checks.** This means that foreign key violations are only checked at the end of the migration (and they make the migration fail). See <doc:Migrations#Foreign-Key-Checks> below for more information.
 
-**The memory of applied migrations is stored in the database itself** (in a reserved table).
+**The record of applied migrations is stored in the database itself** (in a reserved table).
 
 ## Defining the Database Schema from a Migration
 
@@ -110,7 +110,7 @@ migrator.registerMigration("Guilds", foreignKeyChecks: .immediate) { db in
 }
 ```
 
-Note: migrations that run with `.immediate` foreign key checks can not be used to recreated database tables, as described below. When needed, define two migrations instead of one.
+Note: migrations that run with `.immediate` foreign key checks cannot be used to recreate database tables, as described below. When needed, define two migrations instead of one.
 
 #### How to Recreate a Database Table 
 
@@ -133,7 +133,7 @@ migrator.registerMigration("Add NOT NULL check on author.name") { db in
 
 The detailed sequence of operations for recreating a database table from a migration is:
 
-1. When relevant, remember the format of all indexes, triggers, and views associated with table `X`. This information will be needed in steps 6 below. One way to do this is to run the following statement and examine the output in the console:
+1. When relevant, remember the format of all indexes, triggers, and views associated with table `X`. This information will be needed in step 6 below. One way to do this is to run the following statement and examine the output in the console:
 
     ```swift
     try db.dumpSQL("SELECT type, sql FROM sqlite_schema WHERE tbl_name='X'")
@@ -193,7 +193,7 @@ migrator.registerMigration("Create authors") { db in
 }
 ```
 
-In other words, migrations should talk to the database, only to the database, and use the database language. This makes sure the Swift code of any given migrations will never have to change in the future.
+In other words, migrations should talk to the database, only to the database, and use the database language. This makes sure the Swift code of any given migration will never have to change in the future.
 
 Migrations and the rest of the application code do not live at the same "moment". Migrations describe the past states of the database, while the rest of the application code targets the latest one only. This difference is the reason why **migrations should not depend on application types.**
 
@@ -222,7 +222,7 @@ migrator.eraseDatabaseOnSchemaChange = true
 
 By default, each migration temporarily disables foreign keys, and performs a full check of all foreign keys in the database before it is committed on disk.
 
-When the database becomes very big, those checks may have a noticeable impact on migration performances. You'll know this by profiling migrations, and looking for the time spent in the `checkForeignKeys` method.
+When the database becomes very big, those checks may have a noticeable impact on migration performance. You'll know this by profiling migrations, and looking for the time spent in the `checkForeignKeys` method.
 
 You can make those migrations faster, but this requires a little care.
 
@@ -234,7 +234,7 @@ When you register a migration with `.immediate` foreign key checks, the migratio
 migrator.registerMigration("Fast migration", foreignKeyChecks: .immediate) { db in ... }
 ```
 
-Such a migration is faster, and it still guarantees database integrity. But it must only execute schema alterations directly supported by SQLite. Migrations that recreate tables as described in <doc:Migrations#Defining-the-Database-Schema-from-a-Migration> **must not** run with immediate foreign keys checks. You'll need to use the second mitigation technique:
+Such a migration is faster, and it still guarantees database integrity. But it must only execute schema alterations directly supported by SQLite. Migrations that recreate tables as described in <doc:Migrations#Defining-the-Database-Schema-from-a-Migration> **must not** run with immediate foreign key checks. You'll need to use the second mitigation technique:
 
 **Your second mitigation technique is to disable deferred foreign key checks.**
 

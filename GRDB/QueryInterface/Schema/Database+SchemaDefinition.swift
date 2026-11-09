@@ -53,7 +53,7 @@ extension Database {
     ///
     /// ### Reference documentation
     ///
-    /// SQLite has many reference documents about table creation. They are a
+    /// SQLite has many reference documents about table creation. They are
     /// great learning material:
     ///
     /// - [CREATE TABLE](https://www.sqlite.org/lang_createtable.html)
@@ -92,13 +92,13 @@ extension Database {
     /// // CREATE TABLE player ( ... )
     /// try db.create(table: "player") { t in ... }
     ///
-    /// // CREATE TEMPORARY TABLE player IF NOT EXISTS (
+    /// // CREATE TEMPORARY TABLE IF NOT EXISTS player (
     /// try db.create(table: "player", options: [.temporary, .ifNotExists]) { t in ... }
     /// ```
     ///
     /// ### Add columns
     ///
-    /// Add columns with their name and eventual type (`text`, `integer`,
+    /// Add columns with their name and optional type (`text`, `integer`,
     /// `double`, `real`, `numeric`, `boolean`, `blob`, `date`, `datetime`
     /// and `any`) - see ``Database/ColumnType``:
     ///
@@ -106,11 +106,13 @@ extension Database {
     /// // CREATE TABLE example (
     /// //   a,
     /// //   name TEXT,
-    /// //   creationDate DATETIME,
+    /// //   creationDate DATETIME
+    /// // )
     /// try db.create(table: "example") { t in
     ///     t.column("a")
     ///     t.column("name", .text)
     ///     t.column("creationDate", .datetime)
+    /// }
     /// ```
     ///
     /// The `column()` method returns a ``ColumnDefinition`` that you can
@@ -200,7 +202,7 @@ extension Database {
     /// >
     /// > The reason for this recommendation is that auto-incremented primary
     /// > keys forbid the reuse of ids. This prevents your app or
-    /// > <doc:DatabaseObservation> to think that a row was updated, when it was
+    /// > <doc:DatabaseObservation> from thinking that a row was updated, when it was
     /// > actually deleted and replaced. Depending on your application needs,
     /// > this may be acceptable. But usually it is not.
     ///
@@ -330,7 +332,7 @@ extension Database {
     /// // CREATE VIEW hero AS SELECT * FROM player WHERE isHero == 1
     /// try db.create(view: "hero", as: SQLRequest(literal: """
     ///     SELECT * FROM player WHERE isHero == 1
-    ///     """)
+    ///     """))
     /// ```
     ///
     /// You can also create a view with a ``QueryInterfaceRequest``:

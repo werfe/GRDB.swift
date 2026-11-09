@@ -84,7 +84,7 @@ public protocol EncodableRecord: GRDBSendableMetatype {
     /// For example:
     ///
     /// ```swift
-    /// // A key that holds a encoder's name
+    /// // A key that holds an encoder's name
     /// let encoderName = CodingUserInfoKey(rawValue: "encoderName")!
     ///
     /// struct Player: PersistableRecord, Encodable {
@@ -205,7 +205,7 @@ public protocol EncodableRecord: GRDBSendableMetatype {
     /// For example:
     ///
     /// ```swift
-    /// struct Player: EncodableProtocol, Encodable {
+    /// struct Player: EncodableRecord, Encodable {
     ///     static let databaseColumnEncodingStrategy = DatabaseColumnEncodingStrategy.convertToSnakeCase
     ///
     ///     // Encoded in the 'player_id' column
@@ -299,11 +299,11 @@ extension EncodableRecord {
     
     /// Returns a dictionary of values changed from the other record.
     ///
-    /// The keys of the dictionary are the column names for which record do not
+    /// The keys of the dictionary are the column names for which records do not
     /// share the same value. Values are the database values from the
     /// `other` record.
     ///
-    /// Note that the `other` record does not have to have the same type of the
+    /// Note that the `other` record does not have to have the same type as the
     /// receiver record. When the two records don't define the same set of
     /// columns in their <doc:/documentation/GRDB/EncodableRecord/encode(to:)-k9pf>
     /// method, only the columns defined by the receiver are considered.
@@ -321,7 +321,7 @@ extension EncodableRecord {
     /// returns a dictionary of changed values.
     ///
     /// The keys of the dictionary are the changed column names. Values are
-    /// the database values from the initial version record.
+    /// the database values from the initial version of the record.
     ///
     /// For example:
     ///
@@ -356,7 +356,7 @@ extension EncodableRecord {
 /// `PersistenceContainer` is the argument of the
 /// ``EncodableRecord/encode(to:)-k9pf`` method.
 public struct PersistenceContainer: Sendable {
-    // The ordering of the OrderedDictionary helps generating always the same
+    // The ordering of the OrderedDictionary helps always generate the same
     // SQL queries, and hit the statement cache.
     private var storage: OrderedDictionary<CaseInsensitiveIdentifier, DatabaseValue>
     
@@ -470,7 +470,7 @@ extension Row {
 ///
 /// ```swift
 /// struct Player: EncodableRecord, Encodable {
-///     static func databaseDataEncodingStrategy(for column: Column) -> DatabaseDataEncodingStrategy {
+///     static func databaseDataEncodingStrategy(for column: String) -> DatabaseDataEncodingStrategy {
 ///         .text
 ///     }
 ///
@@ -485,7 +485,7 @@ public enum DatabaseDataEncodingStrategy: Sendable {
     /// Encodes `Data` columns as SQL text. Data must contain valid UTF8 bytes.
     case text
     
-    /// Encodes `Data` column as the result of the user-provided function.
+    /// Encodes `Data` columns as the result of the user-provided function.
     case custom(@Sendable (Data) -> (any DatabaseValueConvertible)?)
     
     func encode(_ data: Data) throws -> DatabaseValue {
@@ -516,7 +516,7 @@ public enum DatabaseDataEncodingStrategy: Sendable {
 ///
 /// ```swift
 /// struct Player: EncodableRecord, Encodable {
-///     static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {`
+///     static func databaseDateEncodingStrategy(for column: String) -> DatabaseDateEncodingStrategy {
 ///         .timeIntervalSince1970
 ///     }
 ///
@@ -601,7 +601,7 @@ public enum DatabaseDateEncodingStrategy: @unchecked Sendable {
 ///
 /// ```swift
 /// struct Player: EncodableRecord, Encodable {
-///     static func databaseUUIDEncodingStrategy(for column: String) -> DatabaseUUIDEncodingStrategy {`
+///     static func databaseUUIDEncodingStrategy(for column: String) -> DatabaseUUIDEncodingStrategy {
 ///         .uppercaseString
 ///     }
 ///
@@ -612,7 +612,7 @@ public enum DatabaseDateEncodingStrategy: @unchecked Sendable {
 public enum DatabaseUUIDEncodingStrategy: Sendable {
     /// The strategy that uses formatting from the UUID type.
     ///
-    /// It encodes UUIDs as 16-bytes data blobs.
+    /// It encodes UUIDs as 16-byte data blobs.
     case deferredToUUID
     
     /// Encodes UUIDs as uppercased strings such as "E621E1F8-C36C-495A-93FC-0C247A3E6E5F"
@@ -643,7 +643,7 @@ public enum DatabaseUUIDEncodingStrategy: Sendable {
 /// For example:
 ///
 /// ```swift
-/// struct Player: EncodableProtocol, Encodable {
+/// struct Player: EncodableRecord, Encodable {
 ///     static let databaseColumnEncodingStrategy = DatabaseColumnEncodingStrategy.convertToSnakeCase
 ///
 ///     // Encoded in the 'player_id' column

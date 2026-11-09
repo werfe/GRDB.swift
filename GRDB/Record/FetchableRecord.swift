@@ -191,7 +191,7 @@ public protocol FetchableRecord {
     /// ```swift
     /// struct Player: FetchableRecord, Decodable {
     ///     static func databaseDataDecodingStrategy(for column: String) -> DatabaseDataDecodingStrategy {
-    ///         .custom { dbValue
+    ///         .custom { dbValue in
     ///             guard let base64Data = Data.fromDatabaseValue(dbValue) else {
     ///                 return nil
     ///             }
@@ -983,7 +983,7 @@ extension RecordCursor: Sendable { }
 // MARK: - DatabaseDataDecodingStrategy
 
 /// `DatabaseDataDecodingStrategy` specifies how `FetchableRecord` types that
-/// also  adopt the standard `Decodable` protocol decode their
+/// also adopt the standard `Decodable` protocol decode their
 /// `Data` properties.
 ///
 /// For example:
@@ -991,7 +991,7 @@ extension RecordCursor: Sendable { }
 /// ```swift
 /// struct Player: FetchableRecord, Decodable {
 ///     static func databaseDataDecodingStrategy(for column: String) -> DatabaseDataDecodingStrategy {
-///         .custom { dbValue
+///         .custom { dbValue in
 ///             guard let base64Data = Data.fromDatabaseValue(dbValue) else {
 ///                 return nil
 ///             }
@@ -1018,7 +1018,7 @@ public enum DatabaseDataDecodingStrategy: Sendable {
 // MARK: - DatabaseDateDecodingStrategy
 
 /// `DatabaseDateDecodingStrategy` specifies how `FetchableRecord` types that
-/// also  adopt the standard `Decodable` protocol decode their
+/// also adopt the standard `Decodable` protocol decode their
 /// `Date` properties.
 ///
 /// For example:
@@ -1066,7 +1066,7 @@ public enum DatabaseDateDecodingStrategy: @unchecked Sendable {
     /// midnight UTC on 1 January 1970
     case millisecondsSince1970
     
-    /// Decodes dates according to the ISO 8601 standards
+    /// Decodes dates according to the ISO 8601 standard
     case iso8601
     
     /// Decodes a String, according to the provided formatter
@@ -1074,7 +1074,7 @@ public enum DatabaseDateDecodingStrategy: @unchecked Sendable {
     
     /// Decodes according to the user-provided function.
     ///
-    /// If the database value  does not contain a suitable value, the function
+    /// If the database value does not contain a suitable value, the function
     /// must return nil (GRDB will interpret this nil result as a conversion
     /// error, and react accordingly).
     case custom(@Sendable (DatabaseValue) -> Date?)

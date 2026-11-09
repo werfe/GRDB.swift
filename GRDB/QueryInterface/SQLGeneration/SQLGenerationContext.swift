@@ -3,7 +3,7 @@
 /// - It provides a database connection during SQL generation, for any purpose
 ///   such as schema introspection.
 ///
-/// - It provides unique table aliases in order to disambiguates table names
+/// - It provides unique table aliases in order to disambiguate table names
 ///   and columns.
 ///
 /// - It gathers SQL arguments in order to prevent SQL injection.
@@ -46,7 +46,7 @@ final class SQLGenerationContext {
     /// - parameter db: A database connection.
     /// - parameter argumentsSink: An arguments sink.
     /// - parameter aliases: An array of table aliases to disambiguate.
-    /// - parameter ctes: An dictionary of available CTEs.
+    /// - parameter ctes: A dictionary of available CTEs.
     init(
         _ db: Database,
         argumentsSink: StatementArgumentsSink = StatementArgumentsSink(),
@@ -63,7 +63,7 @@ final class SQLGenerationContext {
     ///
     /// - parameter parent: A parent context.
     /// - parameter aliases: An array of table aliases to disambiguate.
-    /// - parameter ctes: An dictionary of available CTEs.
+    /// - parameter ctes: A dictionary of available CTEs.
     private init(
         parent: SQLGenerationContext,
         aliases: [TableAliasBase],
@@ -157,7 +157,7 @@ final class SQLGenerationContext {
     /// by `tableName`.
     ///
     /// - parameter tableName: The table name.
-    /// - parameter excludedColumns: The eventual set of excluded columns.
+    /// - parameter excludedColumns: The optional set of excluded columns.
     func columnCount(
         in tableName: String,
         excluding excludedColumns: Set<CaseInsensitiveIdentifier>
@@ -231,7 +231,7 @@ class StatementArgumentsSink {
     
     // fileprivate so that SQLGenerationContext.append(arguments:) is the only
     // available api.
-    /// Returns false for SQLGenerationContext.rawSQLContext
+    /// Returns false for StatementArgumentsSink.literalValues
     fileprivate func append(arguments: StatementArguments) -> Bool {
         if arguments.isEmpty {
             return true
@@ -255,7 +255,7 @@ extension [TableAliasBase] {
         //      let request = Book
         //          .including(required: Book.author.aliased(alias)...)
         //          .including(required: Book.author.aliased(alias)...)
-        GRDBPrecondition(count == Set(self).count, "A TableAlias most not be used to refer to multiple tables")
+        GRDBPrecondition(count == Set(self).count, "A TableAlias must not be used to refer to multiple tables")
         
         let groups = Dictionary(grouping: self) {
             $0.identityName.lowercased()

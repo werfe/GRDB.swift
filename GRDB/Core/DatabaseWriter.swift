@@ -336,7 +336,7 @@ public protocol DatabaseWriter: DatabaseReader {
     /// any transaction. You'll get a fatal error otherwise.
     ///
     /// Database operations performed by the `value` closure are isolated in a
-    /// transaction: they do not see changes performed by eventual concurrent
+    /// transaction: they do not see changes performed by concurrent
     /// writes (even writes performed by other processes).
     ///
     /// They see the database in the state left by the last updates performed
@@ -348,10 +348,10 @@ public protocol DatabaseWriter: DatabaseReader {
     /// ```swift
     /// try writer.writeWithoutTransaction { db in
     ///     // Delete all players
-    ///     try Player.deleteAll()
+    ///     try Player.deleteAll(db)
     ///
     ///     // Count players concurrently
-    ///     writer.spawnConcurrentRead { db in
+    ///     writer.spawnConcurrentRead { dbResult in
     ///         do {
     ///             let db = try dbResult.get()
     ///             // Guaranteed to be zero
@@ -392,9 +392,9 @@ extension DatabaseWriter {
     /// ```
     ///
     /// Database operations are wrapped in a transaction. If they throw an
-    /// error, the transaction is rollbacked and the error is rethrown.
+    /// error, the transaction is rolled back and the error is rethrown.
     ///
-    /// Concurrent database accesses can not see partial database updates (even
+    /// Concurrent database accesses cannot see partial database updates (even
     /// when performed by other processes).
     ///
     /// Database operations run in the writer dispatch queue, serialized
@@ -438,17 +438,18 @@ extension DatabaseWriter {
     ///         // Handle success
     ///     case let .failure(error):
     ///         // Handle error
+    ///     }
     /// }
     /// ```
     ///
     /// Database operations run by the `updates` closure are wrapped in
-    /// a transaction. If they throw an error, the transaction is rollbacked.
+    /// a transaction. If they throw an error, the transaction is rolled back.
     ///
     /// The `completion` closure has two arguments: a database connection, and
     /// the result of the transaction. This result is a failure if the
     /// transaction could not be committed or if `updates` has thrown an error.
     ///
-    /// Concurrent database accesses can not see partial database updates
+    /// Concurrent database accesses cannot see partial database updates
     /// performed by `updates` (even when performed by other processes).
     ///
     /// Database operations run in the writer dispatch queue, serialized
@@ -623,9 +624,9 @@ extension DatabaseWriter {
     /// ```
     ///
     /// Database operations are wrapped in a transaction. If they throw an
-    /// error, the transaction is rollbacked and the error is rethrown.
+    /// error, the transaction is rolled back and the error is rethrown.
     ///
-    /// Concurrent database accesses can not see partial database updates (even
+    /// Concurrent database accesses cannot see partial database updates (even
     /// when performed by other processes).
     ///
     /// Database operations run in the writer dispatch queue, serialized
@@ -715,10 +716,10 @@ extension DatabaseWriter {
     /// ```
     ///
     /// Database operations are wrapped in a transaction. If they throw an
-    /// error, the transaction is rollbacked and the error completes
+    /// error, the transaction is rolled back and the error completes
     /// the publisher.
     ///
-    /// Concurrent database accesses can not see partial database updates (even
+    /// Concurrent database accesses cannot see partial database updates (even
     /// when performed by other processes).
     ///
     /// Database operations are asynchronously dispatched in the writer dispatch
@@ -776,7 +777,7 @@ extension DatabaseWriter {
     /// The difference is that the last fetches are performed in the `thenRead`
     /// closure. This closure accepts two arguments: a read-only database
     /// connection, and the result of the `updates` function. This allows you to
-    /// pass information from a function to the other (it is ignored in the
+    /// pass information from one function to the other (it is ignored in the
     /// sample code above).
     ///
     /// When you use a ``DatabasePool``, this method applies a scheduling
@@ -855,7 +856,7 @@ extension Publisher where Failure == Error {
 public final class AnyDatabaseWriter {
     private let base: any DatabaseWriter
     
-    /// Creates a new database reader that wraps and forwards operations
+    /// Creates a new database writer that wraps and forwards operations
     /// to `base`.
     public init(_ base: any DatabaseWriter) {
         self.base = base

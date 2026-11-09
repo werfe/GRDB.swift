@@ -5,7 +5,7 @@
 /// tables that are not unambiguously related with a single SQLite foreign key.
 ///
 /// Sometimes the database schema does not define any foreign key between two
-/// tables. And sometimes, there are several foreign keys from a table
+/// tables. And sometimes, there are several foreign keys from one table
 /// to another:
 ///
 ///     | Table book   |       | Table person |
@@ -20,7 +20,7 @@
 /// foreign key from book to person", or "Could not infer foreign key from book
 /// to person".
 ///
-/// Your help is needed. You have to instruct which foreign key to use.
+/// Your help is needed. You have to specify which foreign key to use.
 /// For example:
 ///
 /// ```swift
@@ -31,8 +31,8 @@
 ///     }
 ///
 ///     // Define foreign keys
-///     static let authorForeignKey = ForeignKey([Columns.authorId]))
-///     static let translatorForeignKey = ForeignKey([Columns.translatorId]))
+///     static let authorForeignKey = ForeignKey([Columns.authorId])
+///     static let translatorForeignKey = ForeignKey([Columns.translatorId])
 ///
 ///     // Use foreign keys to define associations:
 ///     static let author = belongsTo(
@@ -51,8 +51,8 @@
 ///
 /// ```swift
 /// struct Book: TableRecord {
-///     static let authorForeignKey = ForeignKey(["authorId"], to: ["id"]))
-///     static let translatorForeignKey = ForeignKey(["translatorId"], to: ["id"]))
+///     static let authorForeignKey = ForeignKey(["authorId"], to: ["id"])
+///     static let translatorForeignKey = ForeignKey(["translatorId"], to: ["id"])
 /// }
 /// ```
 ///

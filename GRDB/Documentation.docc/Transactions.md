@@ -6,7 +6,7 @@ Precise transaction handling.
 
 **A transaction is a fundamental tool of SQLite** that guarantees [data consistency](https://www.sqlite.org/transactional.html) as well as [proper isolation](https://sqlite.org/isolation.html) between application threads and database connections. It is at the core of GRDB <doc:Concurrency> guarantees.
 
-To profit from database transactions, all you have to do is group related database statements in a single database access method such as ``DatabaseWriter/write(_:)-76inz`` or ``DatabaseReader/read(_:)-3806d``:
+To benefit from database transactions, all you have to do is group related database statements in a single database access method such as ``DatabaseWriter/write(_:)-76inz`` or ``DatabaseReader/read(_:)-3806d``:
 
 ```swift
 // BEGIN TRANSACTION
@@ -126,12 +126,12 @@ try dbQueue.writeWithoutTransaction { db in
 }
 ```
 
-If an error is thrown from the transaction block, the transaction is rollbacked and the error is rethrown by the transaction method. If the transaction closure returns `.rollback` instead of `.commit`, the transaction is also rollbacked, but no error is thrown.
+If an error is thrown from the transaction block, the transaction is rolled back and the error is rethrown by the transaction method. If the transaction closure returns `.rollback` instead of `.commit`, the transaction is also rolled back, but no error is thrown.
 
 Full manual transaction management is also possible: 
 
 ```swift
-try dbQueue.writeWithoutTransaction { db
+try dbQueue.writeWithoutTransaction { db in
     try db.beginTransaction()
     ...
     try db.commit()
@@ -142,7 +142,7 @@ try dbQueue.writeWithoutTransaction { db
 }
 ```
 
-Make sure all transactions opened from a database access are committed or rollbacked from that same database access, because it is a programmer error to leave an opened transaction:
+Make sure all transactions opened from a database access are committed or rolled back from that same database access, because it is a programmer error to leave an open transaction:
 
 ```swift
 // fatal error: A transaction has been left
@@ -155,9 +155,9 @@ try dbQueue.writeWithoutTransaction { db in
 
 In particular, since commits may throw an error, make sure you perform a rollback when a commit fails.
 
-This restriction can be left with the ``Configuration/allowsUnsafeTransactions`` configuration flag.
+This restriction can be lifted with the ``Configuration/allowsUnsafeTransactions`` configuration flag.
 
-It is possible to ask if a transaction is currently opened:
+It is possible to ask if a transaction is currently open:
 
 ```swift
 func myCriticalMethod(_ db: Database) throws {
@@ -179,7 +179,7 @@ func myCriticalMethod(_ db: Database) throws {
 
 ## Savepoints
 
-**Statements grouped in a savepoint can be rollbacked without invalidating a whole transaction:**
+**Statements grouped in a savepoint can be rolled back without invalidating a whole transaction:**
 
 ```swift
 try dbQueue.write { db in
@@ -194,9 +194,9 @@ try dbQueue.write { db in
 }
 ```
 
-If an error is thrown from the savepoint block, the savepoint is rollbacked and the error is rethrown by the `inSavepoint` method. If the savepoint closure returns `.rollback` instead of `.commit`, the savepoint is also rollbacked, but no error is thrown.
+If an error is thrown from the savepoint block, the savepoint is rolled back and the error is rethrown by the `inSavepoint` method. If the savepoint closure returns `.rollback` instead of `.commit`, the savepoint is also rolled back, but no error is thrown.
 
-**Unlike transactions, savepoints can be nested.** They implicitly open a transaction if no one was opened when the savepoint begins. As such, they behave just like nested transactions. Yet the database changes are only written to disk when the outermost transaction is committed:
+**Unlike transactions, savepoints can be nested.** They implicitly open a transaction if none was opened when the savepoint begins. As such, they behave just like nested transactions. Yet the database changes are only written to disk when the outermost transaction is committed:
 
 ```swift
 try dbQueue.writeWithoutTransaction { db in
@@ -212,16 +212,16 @@ try dbQueue.writeWithoutTransaction { db in
 }
 ```
 
-SQLite savepoints are more than nested transactions, though. For advanced uses, use [SQLite savepoint documentation](https://www.sqlite.org/lang_savepoint.html).
+SQLite savepoints are more than nested transactions, though. For advanced uses, see the [SQLite savepoint documentation](https://www.sqlite.org/lang_savepoint.html).
 
 
 ## Transaction Kinds
 
 SQLite supports [three kinds of transactions](https://www.sqlite.org/lang_transaction.html): deferred (the default), immediate, and exclusive.
 
-By default, GRDB opens DEFERRED transaction for reads, and IMMEDIATE transactions for writes.
+By default, GRDB opens DEFERRED transactions for reads, and IMMEDIATE transactions for writes.
 
-The transaction kind can be chosen for individual transaction:
+The transaction kind can be chosen for individual transactions:
 
 ```swift
 let dbQueue = try DatabaseQueue(path: "/path/to/database.sqlite")

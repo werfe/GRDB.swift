@@ -74,7 +74,7 @@ public struct FTS3 {
     /// // ["sqlite", "database"]
     /// try FTS3.tokenize("SQLite database")
     ///
-    /// // ["gustave", "doré"])
+    /// // ["gustave", "doré"]
     /// try FTS3.tokenize("Gustave Doré")
     /// ```
     ///
@@ -84,7 +84,7 @@ public struct FTS3 {
     /// // ["sqlite", "databas"]
     /// try FTS3.tokenize("SQLite database", withTokenizer: .porter)
     ///
-    /// // ["gustave", "dore"])
+    /// // ["gustave", "dore"]
     /// try FTS3.tokenize("Gustave Doré", withTokenizer: .unicode61())
     /// ```
     ///
@@ -139,7 +139,7 @@ extension FTS3: VirtualTableModule {
     public func database(_ db: Database, didCreate tableName: String, using definition: FTS3TableDefinition) { }
 }
 
-/// A `FTS3TableDefinition` lets you define the components of an FTS3
+/// An `FTS3TableDefinition` lets you define the components of an FTS3
 /// virtual table.
 ///
 /// You don't create instances of this class. Instead, you use the `Database`
@@ -158,7 +158,7 @@ public final class FTS3TableDefinition {
     /// For example:
     ///
     /// ```swift
-    /// // CREATE VIRTUAL TABLE documents USING fts3(tokenize=porter)
+    /// // CREATE VIRTUAL TABLE document USING fts3(tokenize=porter)
     /// try db.create(virtualTable: "document", using: FTS3()) { t in
     ///     t.tokenizer = .porter
     /// }

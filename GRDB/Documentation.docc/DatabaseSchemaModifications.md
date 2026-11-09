@@ -4,7 +4,7 @@ How to modify the database schema
 
 ## Overview
 
-For modifying the database schema, prefer Swift methods over raw SQL queries. They allow the compiler to check if a schema change is available on the target operating system. Only use a raw SQL query when no Swift method exist (when creating triggers, for example).
+For modifying the database schema, prefer Swift methods over raw SQL queries. They allow the compiler to check if a schema change is available on the target operating system. Only use a raw SQL query when no Swift method exists (when creating triggers, for example).
 
 When a schema change is not directly supported by SQLite, or not available on the target operating system, database tables have to be recreated. See <doc:Migrations> for the detailed procedure.
 
@@ -17,8 +17,8 @@ The ``Database/create(table:options:body:)`` method covers nearly all SQLite tab
 //   id INTEGER PRIMARY KEY AUTOINCREMENT,
 //   title TEXT,
 //   favorite BOOLEAN NOT NULL DEFAULT 0,
-//   latitude DOUBLE NOT NULL,
-//   longitude DOUBLE NOT NULL
+//   longitude DOUBLE NOT NULL,
+//   latitude DOUBLE NOT NULL
 // )
 try db.create(table: "place") { t in
     t.autoIncrementedPrimaryKey("id")
@@ -35,13 +35,13 @@ try db.create(table: "place") { t in
 // CREATE TABLE player ( ... )
 try db.create(table: "player") { t in ... }
     
-// CREATE TEMPORARY TABLE player IF NOT EXISTS (
+// CREATE TEMPORARY TABLE IF NOT EXISTS player (
 try db.create(table: "player", options: [.temporary, .ifNotExists]) { t in ... }
 ```
 
 Reference: ``TableOptions``
 
-**Add regular columns** with their name and eventual type (`text`, `integer`, `double`, `real`, `numeric`, `boolean`, `blob`, `date`, `datetime`, `any`, and `json`) - see [SQLite data types](https://www.sqlite.org/datatype3.html) and <doc:JSON>:
+**Add regular columns** with their name and optional type (`text`, `integer`, `double`, `real`, `numeric`, `boolean`, `blob`, `date`, `datetime`, `any`, and `jsonText`) - see [SQLite data types](https://www.sqlite.org/datatype3.html) and <doc:JSON>:
 
 ```swift
 // CREATE TABLE player (
@@ -53,7 +53,7 @@ try db.create(table: "player") { t in
     t.column("score")
     t.column("name", .text)
     t.column("creationDate", .datetime)
-    t.column("address", .json)
+    t.column("address", .jsonText)
 ```
 
 Reference: ``TableDefinition/column(_:_:)``
@@ -244,7 +244,7 @@ try db.create(
     ])
 ```
 
-Unique constraints and unique indexes are somewhat different: don't miss the tip in <doc:DatabaseSchemaRecommendations/Unique-keys-should-be-supported-by-unique-indexes> below.
+Unique constraints and unique indexes are somewhat different: don't miss the tip in <doc:DatabaseSchemaRecommendations#Unique-keys-should-be-supported-by-unique-indexes> below.
 
 ## Topics
 

@@ -93,7 +93,7 @@ public struct Configuration: Sendable {
     public var label: String?
     
     /// A boolean value indicating whether SQLite 3.29+ interprets
-    /// double-quoted strings as string literals when they does not match any
+    /// double-quoted strings as string literals when they do not match any
     /// valid identifier.
     ///
     /// The default and recommended value is false:
@@ -126,7 +126,7 @@ public struct Configuration: Sendable {
     ///
     /// Set this flag to true when you apply the technique described in
     /// <doc:DatabaseSharing#How-to-limit-the-0xDEAD10CC-exception>. See
-    /// ``Database/suspendNotification`` for more informations about
+    /// ``Database/suspendNotification`` for more information about
     /// suspended databases.
     public var observesSuspensionNotifications = false
     
@@ -155,7 +155,7 @@ public struct Configuration: Sendable {
     /// }
     /// ```
     ///
-    /// For debugging purpose, you can set this flag to true, and get more
+    /// For debugging purposes, you can set this flag to true, and get more
     /// precise database reports. It is your responsibility to prevent sensitive
     /// information from leaking in unexpected locations, so you should not set
     /// this flag in release builds (think about GDPR and other
@@ -236,7 +236,7 @@ public struct Configuration: Sendable {
     /// }
     /// ```
     ///
-    /// On newly created databases files, ``DatabasePool`` activates the WAL
+    /// On newly created database files, ``DatabasePool`` activates the WAL
     /// mode after the preparation functions have run.
     public mutating func prepareDatabase(_ setup: @escaping @Sendable (Database) throws -> Void) {
         setups.append(setup)
@@ -245,7 +245,7 @@ public struct Configuration: Sendable {
     // MARK: - Transactions
     
     /// A boolean value indicating whether it is valid to leave a transaction
-    /// opened at the end of a database access method.
+    /// open at the end of a database access method.
     ///
     /// The default value is false: not completing a transaction is a
     /// programmer error:
@@ -253,13 +253,13 @@ public struct Configuration: Sendable {
     /// ```swift
     /// let dbQueue = try DatabaseQueue()
     ///
-    /// // fatal error: A transaction has been left opened at the end of a database access
+    /// // fatal error: A transaction has been left open at the end of a database access
     /// try dbQueue.inDatabase { db in
     ///     try db.beginTransaction()
     /// }
     /// ```
     ///
-    /// When true, one can leave opened transaction at the end of database
+    /// When true, one can leave an open transaction at the end of a database
     /// access method:
     ///
     /// ```swift
@@ -277,7 +277,7 @@ public struct Configuration: Sendable {
     /// ```
     ///
     /// This configuration flag has no effect on ``DatabasePool`` reader
-    /// connections: those never allow leaving a transaction opened at the end
+    /// connections: those never allow leaving a transaction open at the end
     /// of a read access.
     public var allowsUnsafeTransactions = false
     
@@ -323,7 +323,7 @@ public struct Configuration: Sendable {
     
     // MARK: - Concurrency
     
-    /// Defines the how `SQLITE_BUSY` errors are handled.
+    /// Defines how `SQLITE_BUSY` errors are handled.
     ///
     /// The default is ``Database/BusyMode/immediateError``.
     ///
@@ -336,7 +336,7 @@ public struct Configuration: Sendable {
     
     /// The maximum number of concurrent reader connections.
     ///
-    /// This configuration has effect on ``DatabasePool`` and
+    /// This configuration has an effect on ``DatabasePool`` and
     /// ``DatabaseSnapshotPool`` only. The default value is 5.
     ///
     /// You can query this value at runtime in order to get the actual capacity
@@ -416,7 +416,7 @@ public struct Configuration: Sendable {
     /// default value is false.
     ///
     /// When the flag is false, a `DatabasePool` closes read-only
-    /// connections when requested to dispose non-essential memory with
+    /// connections when requested to dispose of non-essential memory with
     /// ``DatabasePool/releaseMemory()``. When true, those connections are
     /// kept open.
     ///

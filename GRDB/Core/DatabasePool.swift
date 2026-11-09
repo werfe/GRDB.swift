@@ -59,7 +59,7 @@ public final class DatabasePool {
         
         // Readers can't allow dangling transactions because there's no
         // guarantee that one can get the same reader later in order to close
-        // an opened transaction.
+        // an open transaction.
         readerConfiguration.allowsUnsafeTransactions = false
         
         readerPool = Pool(
@@ -149,7 +149,7 @@ extension DatabasePool {
     
     // MARK: - Memory management
     
-    /// Frees as much memory as possible, by disposing non-essential memory.
+    /// Frees as much memory as possible, by disposing of non-essential memory.
     ///
     /// This method is synchronous, and blocks the current thread until all
     /// database accesses are completed.
@@ -178,14 +178,14 @@ extension DatabasePool {
             // documented.
             //
             // Without the barrier, connections would only close _eventually_ (after
-            // their eventual concurrent jobs have completed).
+            // their concurrent jobs have completed).
             readerPool?.barrier {
                 readerPool?.removeAll()
             }
         }
     }
     
-    /// Eventually frees as much memory as possible, by disposing
+    /// Eventually frees as much memory as possible, by disposing of
     /// non-essential memory.
     ///
     /// This method eventually closes all read-only connections, unless the
@@ -505,8 +505,8 @@ extension DatabasePool: DatabaseReader {
     /// any transaction. You'll get a fatal error otherwise.
     ///
     /// The `value` function is guaranteed to see the database in the last
-    /// committed state at the moment this method is called. Eventual
-    /// concurrent database updates are not visible from the function.
+    /// committed state at the moment this method is called. Concurrent
+    /// database updates are not visible from the function.
     ///
     /// This method returns as soon as the isolation guarantee described above
     /// has been established.
@@ -517,7 +517,7 @@ extension DatabasePool: DatabaseReader {
     /// ```swift
     /// try writer.asyncWriteWithoutTransaction { db in
     ///     // Delete all players
-    ///     try Player.deleteAll()
+    ///     try Player.deleteAll(db)
     ///
     ///     // Count players concurrently
     ///     writer.asyncConcurrentRead { dbResult in
@@ -646,7 +646,7 @@ extension DatabasePool: DatabaseReader {
     /// After this method is called, read-only database access methods will use
     /// new SQLite connections.
     ///
-    /// Eventual concurrent read-only accesses are not interrupted, and
+    /// Concurrent read-only accesses are not interrupted, and
     /// proceed until completion.
     ///
     /// - This method closes all read-only connections, even if the
@@ -848,10 +848,10 @@ extension DatabasePool: DatabaseWriter {
     /// The `updates` function runs in the writer dispatch queue, serialized
     /// with all database updates.
     ///
-    /// If `updates` throws an error, the transaction is rollbacked and the
+    /// If `updates` throws an error, the transaction is rolled back and the
     /// error is rethrown. If it returns
     /// ``Database/TransactionCompletion/rollback``, the transaction is also
-    /// rollbacked, but no error is thrown.
+    /// rolled back, but no error is thrown.
     ///
     /// For example:
     ///
@@ -898,15 +898,15 @@ extension DatabasePool {
     
     // MARK: - Snapshots
     
-    /// Creates a database snapshot that serializes accesses to an unchanging
+    /// Creates a database snapshot that serializes accesses to unchanging
     /// database content, as it exists at the moment the snapshot is created.
     ///
     /// It is a programmer error to create a snapshot from the writer dispatch
-    /// queue when a transaction is opened:
+    /// queue when a transaction is open:
     ///
     /// ```swift
     /// try dbPool.write { db in
-    ///     try Player.deleteAll()
+    ///     try Player.deleteAll(db)
     ///
     ///     // fatal error: makeSnapshot() must not be called from inside a transaction
     ///     let snapshot = try dbPool.makeSnapshot()
@@ -923,7 +923,7 @@ extension DatabasePool {
     ///     let snapshot = try dbPool.makeSnapshot() // OK
     ///
     ///     try db.inTransaction {
-    ///         try Player.deleteAll()
+    ///         try Player.deleteAll(db)
     ///         return .commit
     ///     }
     ///
@@ -951,7 +951,7 @@ extension DatabasePool {
     }
     
 #if SQLITE_ENABLE_SNAPSHOT && !SQLITE_DISABLE_SNAPSHOT
-    /// Creates a database snapshot that allows concurrent accesses to an
+    /// Creates a database snapshot that allows concurrent accesses to
     /// unchanging database content, as it exists at the moment the snapshot
     /// is created.
     ///

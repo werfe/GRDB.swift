@@ -51,13 +51,13 @@ public struct SQLExpression: Sendable {
     /// // JSON_ARRAY('[1, 2, 3]') → '["[1, 2, 3]"]'
     /// // JSON_ARRAY(JSON('[1, 2, 3]')) → [[1,2,3]]
     ///
-    /// // Compare an expression with preferredJSONInterpretation = .unspecified:
+    /// // Compare an expression with preferredJSONInterpretation = .deferredToSQLite:
     /// // JSON_ARRAY("info")
     /// Database.jsonArray([Column("info")])
     ///
     /// // ...with an expression with preferredJSONInterpretation = .jsonValue:
     /// // JSON_ARRAY(JSON("info"))
-    /// Database.jsonArray([Column("info").jsonValue])
+    /// Database.jsonArray([Column("info").asJSON])
     /// Database.jsonArray([JSONColumn("info")])
     /// ```
     var preferredJSONInterpretation = JSONInterpretation.deferredToSQLite
@@ -141,7 +141,7 @@ public struct SQLExpression: Sendable {
         ///     <expression> NOT IN <collection>
         indirect case `in`(SQLExpression, SQLCollection, isNegated: Bool)
         
-        /// An unary operator.
+        /// A unary operator.
         ///
         ///     -<expression>
         indirect case unary(UnaryOperator, SQLExpression)
@@ -192,7 +192,7 @@ public struct SQLExpression: Sendable {
         
         /// An expression that picks the fastest available primary key.
         ///
-        /// It crashes for WITHOUT ROWID table with a multi-columns primary key.
+        /// It crashes for WITHOUT ROWID tables with a multi-column primary key.
         /// Future versions of GRDB may use [row values](https://www.sqlite.org/rowvalue.html).
         ///
         ///     id
@@ -343,9 +343,9 @@ public struct SQLExpression: Sendable {
         
         /// If true, (a • b) • c is strictly equal to a • (b • c).
         ///
-        /// `AND`, `OR`, `||` (concat), `&`, `|` are stricly associative.
+        /// `AND`, `OR`, `||` (concat), `&`, `|` are strictly associative.
         ///
-        /// `+` and `*` are not stricly associative when applied to floating
+        /// `+` and `*` are not strictly associative when applied to floating
         /// point values.
         let isStrictlyAssociative: Bool
         
@@ -588,7 +588,7 @@ public struct SQLExpression: Sendable {
         /// The SQL operator
         let sql: String
         
-        /// Creates an unary operator.
+        /// Creates a unary operator.
         init(_ sql: String) {
             self.sql = sql
         }
@@ -621,10 +621,10 @@ public struct SQLExpression: Sendable {
         ///
         /// ```swift
         /// // JSON_ARRAY(JSON('[1, 2, 3]')) → '[[1, 2, 3]]'
-        /// Database.jsonArray(["[1, 2, 3]"].jsonValue)
+        /// Database.jsonArray([Database.json("[1, 2, 3]")])
         ///
         /// // JSON_ARRAY(JSON("info"))
-        /// Database.jsonArray([Column("info").jsonValue])
+        /// Database.jsonArray([Column("info").asJSON])
         /// Database.jsonArray([JSONColumn("info")])
         /// ```
         case jsonValue
@@ -820,7 +820,7 @@ extension SQLExpression {
         self.init(impl: .in(expression, collection, isNegated: isNegated))
     }
     
-    /// An unary operator.
+    /// A unary operator.
     ///
     ///     -<expression>
     static func unary(_ op: UnaryOperator, _ expression: SQLExpression) -> Self {
@@ -905,7 +905,7 @@ extension SQLExpression {
             //      sqlite> SELECT ('a' COLLATE NOCASE) IN ('A');
             //      1
             //
-            // Conclusion: "x IN (y,z, ...) COLLATE nocase" can not match the
+            // Conclusion: "x IN (y,z, ...) COLLATE nocase" cannot match the
             // user intent. We could fatal error. Or warn. Or just make it work:
             //
             // Prefer: (expression COLLATE collation) IN (...)
@@ -1141,20 +1141,20 @@ extension SQLExpression {
     
     // MARK: Deferred
     
-    // TODO: replace with something that can work for WITHOUT ROWID table with a multi-columns primary key.
+    // TODO: replace with something that can work for WITHOUT ROWID tables with a multi-column primary key.
     /// An expression that picks the fastest available primary key.
     ///
-    /// It crashes for WITHOUT ROWID table with a multi-columns primary key.
+    /// It crashes for WITHOUT ROWID tables with a multi-column primary key.
     ///
     ///     id
     ///     rowid
     ///     code
     static let fastPrimaryKey = SQLExpression(impl: .fastPrimaryKey)
     
-    // TODO: replace with something that can work for WITHOUT ROWID table with a multi-columns primary key.
+    // TODO: replace with something that can work for WITHOUT ROWID tables with a multi-column primary key.
     /// A qualified "fast primary key" (see `SQLExpression.fastPrimaryKey`).
     ///
-    /// It crashes for WITHOUT ROWID table with a multi-columns primary key.
+    /// It crashes for WITHOUT ROWID tables with a multi-column primary key.
     ///
     ///     player.id
     ///     document.rowid
@@ -1192,7 +1192,7 @@ extension SQLExpression {
 extension SQLExpression {
     /// The expression as a quoted SQL literal (not public in order to avoid abuses)
     ///
-    ///     try "foo'bar".databaseValue.quotedSQL(db) // "'foo''bar'""
+    ///     try "foo'bar".databaseValue.quotedSQL(db) // "'foo''bar'"
     func quotedSQL(_ db: Database) throws -> String {
         let context = SQLGenerationContext(db, argumentsSink: .literalValues)
         return try sql(context)
@@ -1271,7 +1271,7 @@ extension SQLExpression {
     /// - parameter context: An SQL generation context which accepts
     ///   statement arguments.
     /// - parameter wrappedInParenthesis: If true, the returned SQL should be
-    ///   wrapped inside parenthesis.
+    ///   wrapped inside parentheses.
     func sql(_ context: SQLGenerationContext, wrappedInParenthesis: Bool = false) throws -> String {
         switch impl {
         case let .column(name):
@@ -1464,7 +1464,7 @@ extension SQLExpression {
         case let .qualifiedFastPrimaryKey(alias):
             let primaryKey = try context.db.primaryKey(alias.tableName)
             guard let column = primaryKey.fastPrimaryKeyColumn else {
-                fatalError("Not implemented for WITHOUT ROWID table with a multi-columns primary key")
+                fatalError("Not implemented for WITHOUT ROWID tables with a multi-column primary key")
             }
             return try SQLExpression
                 .qualifiedColumn(column, alias)
@@ -1510,16 +1510,16 @@ extension SQLExpression {
     ///
     ///     // SELECT * FROM "player" WHERE "name" = 'Arthur' LIMIT 1
     ///     try Player.filter(Column("name") == "Arthur").fetchOne(db)
-    func identifyingColums(_ db: Database, for alias: TableAliasBase) throws -> Set<String> {
+    func identifyingColumns(_ db: Database, for alias: TableAliasBase) throws -> Set<String> {
         switch impl {
         case let .rowValue(expressions):
             assert(!expressions.isEmpty)
-            return try expressions.reduce(into: []) { try $0.formUnion($1.identifyingColums(db, for: alias)) }
+            return try expressions.reduce(into: []) { try $0.formUnion($1.identifyingColumns(db, for: alias)) }
             
         case let .associativeBinary(op, expressions):
             assert(expressions.count > 1)
             if op == .and {
-                return try expressions.reduce(into: []) { try $0.formUnion($1.identifyingColums(db, for: alias)) }
+                return try expressions.reduce(into: []) { try $0.formUnion($1.identifyingColumns(db, for: alias)) }
             } else if op == .or {
                 return []
             } else {
@@ -1548,7 +1548,7 @@ extension SQLExpression {
             }
             
         case let .collated(expression, _):
-            return try expression.identifyingColums(db, for: alias)
+            return try expression.identifyingColumns(db, for: alias)
             
         default:
             return []
@@ -1700,7 +1700,7 @@ extension SQLExpression {
     ///
     /// Some specific expressions can produce idiomatic SQL.
     ///
-    /// For example, the `like(_)` expression:
+    /// For example, the `like(_:escape:)` expression:
     ///
     /// - `column.like(pattern)` -> `column LIKE pattern`
     /// - `!(column.like(pattern))` -> `column NOT LIKE pattern`
@@ -1862,7 +1862,7 @@ extension SQLExpression {
     ///     1 + 2      -- true
     ///     score      -- false
     ///
-    /// This property supports `identifyingColums(_:for:)`
+    /// This property supports `identifyingColumns(_:for:)`
     var isConstantInRequest: Bool {
         switch impl {
         case .databaseValue:
@@ -2078,7 +2078,7 @@ extension SQLExpression {
     ///
     /// A false value does not provide any information.
     ///
-    /// For examples:
+    /// For example:
     ///
     /// ```swift
     /// // isJSONValue is true:
@@ -2191,7 +2191,7 @@ extension SQLExpressible where Self == Column {
 /// For example, ``Column`` is a type that only exists to help you build
 /// requests, and it adopts `SQLSpecificExpressible`.
 ///
-/// On the other side, `Int` adopts ``SQLExpressible``.
+/// On the other hand, `Int` adopts ``SQLExpressible``.
 ///
 /// ## Topics
 ///
@@ -2415,7 +2415,7 @@ extension SQLSpecificExpressible {
     ///
     /// // SELECT (score + bonus) AS totalScore FROM player
     /// let request = Player.select {
-    ///     ($0.score * $0.bonus).forKey("totalScore")
+    ///     ($0.score + $0.bonus).forKey("totalScore")
     /// }
     /// ```
     ///
@@ -2428,7 +2428,7 @@ extension SQLSpecificExpressible {
     /// // ORDER BY totalScore
     /// let request = Player
     ///     .select {
-    ///         ($0.score * $0.bonus).forKey("totalScore")
+    ///         ($0.score + $0.bonus).forKey("totalScore")
     ///     }
     ///     .order(Column("totalScore").detached)
     /// ```
@@ -2460,7 +2460,7 @@ extension SQLSpecificExpressible {
     /// }
     ///
     /// // SELECT * FROM player
-    /// // WHERE email = 'contact@example.com'  COLLATE NOCASE
+    /// // WHERE email = 'contact@example.com' COLLATE NOCASE
     /// Player.filter {
     ///     $0.email.collating(.nocase) == "contact@example.com"
     /// }

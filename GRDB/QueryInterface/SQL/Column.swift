@@ -48,6 +48,7 @@ extension ColumnExpression {
     ///     enum Columns {
     ///         static let score = Column("score")
     ///         static let bonus = Column("bonus")
+    ///         static let name = Column("name")
     ///     }
     /// }
     ///
@@ -93,7 +94,7 @@ extension ColumnExpression where Self == Column {
 ///     }
 /// }
 ///
-/// try dbQueue.read { db in
+/// try dbQueue.write { db in
 ///     // DELETE FROM player WHERE score = 0
 ///     try Player
 ///         .filter { $0.score == 0 }
@@ -131,7 +132,7 @@ public struct Column: Sendable {
     
     /// Creates a `Column` given its name.
     ///
-    /// The name should be unqualified, such as `"score"`. Qualified name such
+    /// The name should be unqualified, such as `"score"`. Qualified names such
     /// as `"player.score"` are unsupported.
     public init(_ name: String) {
         self.name = name

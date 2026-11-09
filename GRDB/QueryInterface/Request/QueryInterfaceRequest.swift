@@ -6,7 +6,7 @@
 //
 // It wraps an SQLQuery, and has an attached type.
 //
-// The attached RowDecoder type helps decoding raw database values:
+// The attached RowDecoder type helps decode raw database values:
 //
 //     try dbQueue.read { db in
 //         try playerRequest.fetchAll(db) // [Player]
@@ -23,7 +23,7 @@
 /// ``Table`` instance. For example:
 ///
 /// ```swift
-/// struct Player: TableRecord, FetchableRecord, DecodableRecord {
+/// struct Player: TableRecord, FetchableRecord, Decodable {
 ///     enum Columns {
 ///         static let name = Column("name")
 ///         static let score = Column("score")
@@ -219,7 +219,7 @@ extension QueryInterfaceRequest: SelectionRequest {
     ///
     /// // SELECT id FROM player
     /// let request = Player.all().select(\.id, as: Int.self)
-    /// let scores = try request.fetchSet(db) // Set<Int>
+    /// let ids = try request.fetchSet(db) // Set<Int>
     ///
     /// // SELECT MAX(score) FROM player
     /// let request = Player.all().select({ max($0.score) }, as: Int.self)
@@ -600,7 +600,7 @@ extension QueryInterfaceRequest where RowDecoder: TableRecord {
 // MARK: - Check Existence
 
 extension QueryInterfaceRequest {
-    /// Returns whether the requests does not match any row in the database.
+    /// Returns whether the request does not match any row in the database.
     ///
     /// For example:
     ///
@@ -691,7 +691,7 @@ extension QueryInterfaceRequest {
     /// // Delete all players and return their names
     /// // DELETE FROM player RETURNING name
     /// let request = Player.all()
-    /// let statement = try request.deleteAndFetchStatement(db, selection: \.name)
+    /// let statement = try request.deleteAndFetchStatement(db, select: { [$0.name] })
     /// let deletedNames = try String.fetchSet(statement)
     /// ```
     ///
@@ -875,7 +875,7 @@ extension QueryInterfaceRequest {
     /// // Delete all players and return their names
     /// // DELETE FROM player RETURNING name
     /// let request = Player.all()
-    /// let statement = try request.deleteAndFetchStatement(db, selection: \.name)
+    /// let statement = try request.deleteAndFetchStatement(db, select: { [$0.name] })
     /// let deletedNames = try String.fetchSet(statement)
     /// ```
     ///
@@ -1184,7 +1184,7 @@ extension QueryInterfaceRequest {
     /// ```swift
     /// struct Player: TableRecord {
     ///     enum Columns {
-    ///         static let score = Column("score)
+    ///         static let score = Column("score")
     ///     }
     /// }
     ///
@@ -1192,7 +1192,7 @@ extension QueryInterfaceRequest {
     /// // UPDATE player SET score = score + 10 RETURNING score
     /// let request = Player.all()
     /// let statement = try request.updateAndFetchStatement(db) {
-    ///     $0.score += 10
+    ///     [$0.score += 10]
     /// } select: {
     ///     [$0.score]
     /// }
@@ -1207,11 +1207,11 @@ extension QueryInterfaceRequest {
     /// - parameter conflictResolution: A policy for conflict resolution.
     /// - parameter assignments: A closure that returns an array of
     ///   column assignments (must not be empty).
-    /// - parameter selection: A closure that returns the returned columns
+    /// - parameter select: A closure that returns the returned columns
     ///   (must not be empty).
     /// - returns: A prepared statement.
     /// - throws: A ``DatabaseError`` whenever an SQLite error occurs.
-    /// - precondition: The results of `select` and `assignments` results
+    /// - precondition: The results of `select` and `assignments`
     ///   are not empty.
     public func updateAndFetchStatement(
         _ db: Database,
@@ -1238,7 +1238,7 @@ extension QueryInterfaceRequest {
     /// let request = Player.all()
     /// let statement = try request.updateAndFetchStatement(
     ///     db, [Column("score") += 10],
-    ///     select: [Column("score")])
+    ///     selection: [Column("score")])
     /// let updatedScores = try Int.fetchAll(statement)
     /// ```
     ///
@@ -1358,7 +1358,7 @@ extension QueryInterfaceRequest {
         return try RowDecoder.fetchCursor(statement)
     }
     
-    /// Execute an `UPDATE RETURNING` statement and returns the array of
+    /// Executes an `UPDATE RETURNING` statement and returns the array of
     /// updated records.
     ///
     /// For example:
@@ -1397,7 +1397,7 @@ extension QueryInterfaceRequest {
         try updateAndFetchAll(db, onConflict: conflictResolution, assignments(RowDecoder.databaseComponents))
     }
     
-    /// Execute an `UPDATE RETURNING` statement and returns the array of
+    /// Executes an `UPDATE RETURNING` statement and returns the array of
     /// updated records.
     ///
     /// For example:
@@ -1429,7 +1429,7 @@ extension QueryInterfaceRequest {
         try Array(updateAndFetchCursor(db, onConflict: conflictResolution, assignments))
     }
     
-    /// Execute an `UPDATE RETURNING` statement and returns the set of
+    /// Executes an `UPDATE RETURNING` statement and returns the set of
     /// updated records.
     ///
     /// For example:
@@ -1444,7 +1444,7 @@ extension QueryInterfaceRequest {
     /// // Fetch all updated players
     /// // UPDATE player SET score = score + 10 RETURNING *
     /// let request = Player.all()
-    /// let updatedPlayers = try request.updateAndFetchSet(db) { [$0.score += 10]) }
+    /// let updatedPlayers = try request.updateAndFetchSet(db) { [$0.score += 10] }
     /// ```
     ///
     /// - important: Make sure you check the documentation of the `RETURNING`
@@ -1468,7 +1468,7 @@ extension QueryInterfaceRequest {
         try updateAndFetchSet(db, onConflict: conflictResolution, assignments(RowDecoder.databaseComponents))
     }
     
-    /// Execute an `UPDATE RETURNING` statement and returns the set of
+    /// Executes an `UPDATE RETURNING` statement and returns the set of
     /// updated records.
     ///
     /// For example:
@@ -1507,7 +1507,7 @@ extension QueryInterfaceRequest {
     /// ```swift
     /// struct Player: TableRecord {
     ///     enum Columns {
-    ///         static let score = Column("score)
+    ///         static let score = Column("score")
     ///     }
     /// }
     ///
@@ -1515,7 +1515,7 @@ extension QueryInterfaceRequest {
     /// // UPDATE player SET score = score + 10 RETURNING score
     /// let request = Player.all()
     /// let statement = try request.updateAndFetchStatement(db) {
-    ///     $0.score += 10
+    ///     [$0.score += 10]
     /// } select: {
     ///     [$0.score]
     /// }
@@ -1534,7 +1534,7 @@ extension QueryInterfaceRequest {
     ///   (must not be empty).
     /// - returns: A prepared statement.
     /// - throws: A ``DatabaseError`` whenever an SQLite error occurs.
-    /// - precondition: The results of `select` and `assignments` results
+    /// - precondition: The results of `select` and `assignments`
     ///   are not empty.
     @available(iOS 15, macOS 12, tvOS 15, watchOS 8, *) // SQLite 3.35.0+
     public func updateAndFetchStatement(
@@ -1562,7 +1562,7 @@ extension QueryInterfaceRequest {
     /// let request = Player.all()
     /// let statement = try request.updateAndFetchStatement(
     ///     db, [Column("score") += 10],
-    ///     select: [Column("score")])
+    ///     selection: [Column("score")])
     /// let updatedScores = try Int.fetchAll(statement)
     /// ```
     ///
@@ -1685,7 +1685,7 @@ extension QueryInterfaceRequest {
         return try RowDecoder.fetchCursor(statement)
     }
     
-    /// Execute an `UPDATE RETURNING` statement and returns the array of
+    /// Executes an `UPDATE RETURNING` statement and returns the array of
     /// updated records.
     ///
     /// For example:
@@ -1725,7 +1725,7 @@ extension QueryInterfaceRequest {
         try updateAndFetchAll(db, onConflict: conflictResolution, assignments(RowDecoder.databaseComponents))
     }
     
-    /// Execute an `UPDATE RETURNING` statement and returns the array of
+    /// Executes an `UPDATE RETURNING` statement and returns the array of
     /// updated records.
     ///
     /// For example:
@@ -1758,7 +1758,7 @@ extension QueryInterfaceRequest {
         try Array(updateAndFetchCursor(db, onConflict: conflictResolution, assignments))
     }
     
-    /// Execute an `UPDATE RETURNING` statement and returns the set of
+    /// Executes an `UPDATE RETURNING` statement and returns the set of
     /// updated records.
     ///
     /// For example:
@@ -1773,7 +1773,7 @@ extension QueryInterfaceRequest {
     /// // Fetch all updated players
     /// // UPDATE player SET score = score + 10 RETURNING *
     /// let request = Player.all()
-    /// let updatedPlayers = try request.updateAndFetchSet(db) { [$0.score += 10]) }
+    /// let updatedPlayers = try request.updateAndFetchSet(db) { [$0.score += 10] }
     /// ```
     ///
     /// - important: Make sure you check the documentation of the `RETURNING`
@@ -1798,7 +1798,7 @@ extension QueryInterfaceRequest {
         try updateAndFetchSet(db, onConflict: conflictResolution, assignments(RowDecoder.databaseComponents))
     }
     
-    /// Execute an `UPDATE RETURNING` statement and returns the set of
+    /// Executes an `UPDATE RETURNING` statement and returns the set of
     /// updated records.
     ///
     /// For example:
@@ -1913,7 +1913,7 @@ extension ColumnExpression {
     ///
     /// try dbQueue.write { db in
     ///     // UPDATE player SET score = 0
-    ///     try Player.updateAll(db) { $0.set(to: 0) }
+    ///     try Player.updateAll(db) { $0.score.set(to: 0) }
     /// }
     /// ```
     public func set(to value: (any SQLExpressible)?) -> ColumnAssignment {
@@ -2370,7 +2370,7 @@ throws -> DatabaseRegion
 
 extension [Row] {
     /// - precondition: Columns all exist in all rows. All rows have the same
-    ///   columnns, in the same order.
+    ///   columns, in the same order.
     fileprivate func grouped(byDatabaseValuesOnColumns columns: [String]) -> [[DatabaseValue]: [Row]] {
         guard let firstRow = first else {
             return [:]

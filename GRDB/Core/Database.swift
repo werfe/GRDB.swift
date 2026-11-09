@@ -399,7 +399,7 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     var autocommitState = AutocommitState.on
     
     /// The date of the current transaction, wrapped in a result that is an
-    /// error if there was an error grabbing this date when the transaction has
+    /// error if there was an error grabbing this date when the transaction
     /// started.
     ///
     /// Invariant: `transactionDateResult` is nil iff connection is not
@@ -494,8 +494,11 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
             // https://www.sqlite.org/c3ref/close.html
             // > Calling sqlite3_close() or sqlite3_close_v2() with a NULL
             // > pointer argument is a harmless no-op.
+            //
+            // Read the error message before the connection is closed.
+            let message = sqliteConnection.map { String(cString: sqlite3_errmsg($0)) }
             _ = sqlite3_close(sqliteConnection) // ignore result code
-            throw DatabaseError(resultCode: code)
+            throw DatabaseError(resultCode: code, message: message)
         }
         guard let sqliteConnection else {
             throw DatabaseError(resultCode: .SQLITE_INTERNAL) // WTF SQLite?
@@ -868,7 +871,7 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     /// For example:
     ///
     /// ```swift
-    /// try dbQueue.write do { db in
+    /// try dbQueue.write { db in
     ///     // Write OK
     ///     try Player(...).insert(db)
     ///
@@ -905,7 +908,7 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     /// Reports the database region to ``ValueObservation``.
     ///
     /// Calling this method does not fetch any database values. It just
-    /// helps optimizing `ValueObservation`. See
+    /// helps optimize `ValueObservation`. See
     /// ``ValueObservation/trackingConstantRegion(_:)`` for more
     /// information, and some examples of usage.
     ///
@@ -1176,7 +1179,7 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     ///
     /// - note: [**🔥 EXPERIMENTAL**](https://github.com/groue/GRDB.swift/blob/master/README.md#what-are-experimental-features)
     ///
-    /// A suspended database makes everything to avoid acquiring a lock on the
+    /// A suspended database does everything to avoid acquiring a lock on the
     /// database. All database operations may throw a ``DatabaseError`` of code
     /// `SQLITE_INTERRUPT` or `SQLITE_ABORT`, except reads in WAL mode.
     ///
@@ -1346,9 +1349,9 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     /// - When database access is cancelled, this method
     ///   throws `CancellationError`.
     ///
-    /// - When database is suspensed, and if the statement would lock the
+    /// - When database is suspended, and if the statement would lock the
     ///   database in a way that may trigger the 0xDEAD10CC exception, this
-    ///   method rollbacks the current transaction and throws `SQLITE_ABORT`.
+    ///   method rolls back the current transaction and throws `SQLITE_ABORT`.
     ///
     /// See `cancel()`, `suspend()` and
     /// ``Configuration/observesSuspensionNotifications``.
@@ -1428,7 +1431,7 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
             throw CancellationError()
             
         case .abort:
-            // Attempt at releasing an eventual lock with ROLLBACk,
+            // Attempt to release a possible lock with ROLLBACK,
             // as explained in Database.suspend().
             try? rollback()
             
@@ -1444,14 +1447,14 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     // MARK: - Transactions & Savepoint
     
     /// Throws `SQLITE_ABORT` if called from a transaction-wrapping method and
-    /// transaction has been aborted (for example, by `sqlite3_interrupt`, or a
-    /// `ON CONFLICT ROLLBACK` clause.
+    /// transaction has been aborted (for example, by `sqlite3_interrupt`, or an
+    /// `ON CONFLICT ROLLBACK` clause).
     ///
     /// For example:
     ///
     ///     try db.inTransaction {
     ///         do {
-    ///             // Throws an error because the transaction was rollbacked.
+    ///             // Throws an error because the transaction was rolled back.
     ///             try ...
     ///         } catch {
     ///             // Catch the error and continue.
@@ -1482,7 +1485,7 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     /// For example:
     ///
     /// ```swift
-    /// try dbQueue.writeWithoutTransaction do { db in
+    /// try dbQueue.writeWithoutTransaction { db in
     ///     try db.inTransaction {
     ///         try db.execute(sql: "INSERT ...")
     ///         return .commit
@@ -1490,13 +1493,13 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     /// }
     /// ```
     ///
-    /// If `operations` throws an error, the transaction is rollbacked and the
+    /// If `operations` throws an error, the transaction is rolled back and the
     /// error is rethrown. If it returns ``TransactionCompletion/rollback``, the
-    /// transaction is also rollbacked, but no error is thrown.
+    /// transaction is also rolled back, but no error is thrown.
     ///
     /// Related SQLite documentation: <https://www.sqlite.org/lang_transaction.html>
     ///
-    /// - warning: This method is not reentrant: you can not nest transactions.
+    /// - warning: This method is not reentrant: you cannot nest transactions.
     ///   Use ``inSavepoint(_:)`` instead.
     ///
     /// - parameters:
@@ -1601,7 +1604,7 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     /// For example:
     ///
     /// ```swift
-    /// try dbQueue.write do {
+    /// try dbQueue.write { db in
     ///     try db.inSavepoint {
     ///         try db.execute(sql: "INSERT ...")
     ///         return .commit
@@ -1609,9 +1612,9 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     /// }
     /// ```
     ///
-    /// If `operations` throws an error, the savepoint is rollbacked and the
+    /// If `operations` throws an error, the savepoint is rolled back and the
     /// error is rethrown. If it returns ``TransactionCompletion/rollback``, the
-    /// savepoint is also rollbacked, but no error is thrown.
+    /// savepoint is also rolled back, but no error is thrown.
     ///
     /// This method is reentrant: you can nest savepoints.
     ///
@@ -1723,11 +1726,11 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     public func beginTransaction(_ kind: TransactionKind? = nil) throws {
         // SQLite throws an error for non-deferred transactions when read-only.
         // We prefer immediate transactions for writes, so that write
-        // transactions can not overlap. This reduces the opportunity for
+        // transactions cannot overlap. This reduces the opportunity for
         // SQLITE_BUSY, which is immediately thrown whenever a transaction
         // is upgraded after an initial read and a concurrent processes
         // has acquired the write lock beforehand. This SQLITE_BUSY error
-        // can not be avoided with a busy timeout.
+        // cannot be avoided with a busy timeout.
         //
         // See <https://github.com/groue/GRDB.swift/issues/1483>.
         let kind = kind ?? (isReadOnly ? .deferred : .immediate)
@@ -1735,7 +1738,7 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
         assert(sqlite3_get_autocommit(sqliteConnection) == 0)
     }
     
-    /// Rollbacks a database transaction.
+    /// Rolls back a database transaction.
     ///
     /// Related SQLite documentation: <https://www.sqlite.org/lang_transaction.html>
     ///
@@ -1807,7 +1810,7 @@ public final class Database: CustomStringConvertible, CustomDebugStringConvertib
     
     /// Resets all prepared statements.
     ///
-    /// This method helps clearing the interrupted state, as a workaround
+    /// This method helps clear the interrupted state, as a workaround
     /// for https://sqlite.org/forum/forumpost/137c7662b3, discovered
     /// in https://github.com/groue/GRDB.swift/issues/1838.
     func resetAllPreparedStatements() {
@@ -2010,7 +2013,8 @@ extension Database {
     /// To set the busy mode of a database, use Configuration:
     ///
     ///     // Wait 1 second before failing with SQLITE_BUSY
-    ///     let configuration = Configuration(busyMode: .timeout(1))
+    ///     var configuration = Configuration()
+    ///     configuration.busyMode = .timeout(1)
     ///     let dbQueue = try DatabaseQueue(path: ..., configuration: configuration)
     ///
     /// Relevant SQLite documentation:
@@ -2082,7 +2086,7 @@ extension Database {
     /// // CREATE TABLE player(
     /// //   id INTEGER PRIMARY KEY,
     /// //   name TEXT,
-    /// //   creationDate DATETIME,
+    /// //   creationDate DATETIME
     /// // )
     /// try db.create(table: "player") { t in
     ///     t.primaryKey("id", .integer)

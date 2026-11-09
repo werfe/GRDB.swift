@@ -147,7 +147,7 @@ open class Record {
     /// This flag is purely informative, and does not prevent insertions and
     /// updates from performing their database queries.
     ///
-    /// A record is *edited* if has been changed since last database
+    /// A record is *edited* if it has been changed since last database
     /// synchronization (fetch, update, or insert). Comparison
     /// is performed between *values* (values stored in the ``encode(to:)``
     /// method, and values decoded from ``init(row:)``). Property setters do not
@@ -169,8 +169,8 @@ open class Record {
     /// A dictionary of changes that have not been saved.
     ///
     /// The keys of the dictionary are column names, and values are the old
-    /// values that have been changed since last fetching or saving of
-    /// the record.
+    /// values that have been changed since the record was last fetched
+    /// or saved.
     ///
     /// Unless the record has actually been fetched or saved, the old values
     /// are nil.
@@ -354,7 +354,7 @@ open class Record {
     /// ```
     ///
     /// - parameter db: A database connection.
-    /// - parameter save: A function that saves the recordsave: A function that saves the record. Its result is
+    /// - parameter save: A function that saves the record. Its result is
     ///   reserved for GRDB usage.
     open func aroundSave(_ db: Database, save: () throws -> PersistenceSuccess) throws {
         _ = try save()
@@ -420,7 +420,7 @@ open class Record {
     /// - returns: Whether the record had changes and was updated.
     /// - throws: A ``DatabaseError`` whenever an SQLite error occurs.
     ///   ``RecordError/recordNotFound(databaseTableName:key:)`` is thrown
-    ///   if the primary key does not match any row in the database and record
+    ///   if the primary key does not match any row in the database and the record
     ///   could not be updated.
     @discardableResult
     public final func updateChanges(_ db: Database) throws -> Bool {

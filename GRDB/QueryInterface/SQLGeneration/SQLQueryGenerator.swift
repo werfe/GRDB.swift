@@ -152,7 +152,7 @@ struct SQLQueryGenerator: Refinable {
     private func optimizedSelectedRegion(_ db: Database, _ selectedRegion: DatabaseRegion) throws -> DatabaseRegion {
         var optimizedRegion = selectedRegion
         
-        // Give up unless request feeds from a database table
+        // Give up unless request fetches from a database table
         let tableName = relation.source.tableName
         guard try db.tableExists(tableName) else { // skip views
             return optimizedRegion
@@ -189,8 +189,8 @@ struct SQLQueryGenerator: Refinable {
         // Do we filter on a unique key?
         let tableName = relation.source.tableName
         if try db.tableExists(tableName), // skip views
-           let identifyingColums = try filter?.identifyingColums(db, for: relation.source.alias),
-           try db.table(tableName, hasUniqueKey: identifyingColums)
+           let identifyingColumns = try filter?.identifyingColumns(db, for: relation.source.alias),
+           try db.table(tableName, hasUniqueKey: identifyingColumns)
         {
             // Filter by unique key: guaranteed single row!
             return true
@@ -466,7 +466,7 @@ struct SQLQueryGenerator: Refinable {
         case none
         /// Grouped by unique key: SELECT ... FROM player GROUP BY id
         case unique
-        /// Grouped by some non-unique columnns: SELECT ... FROM player GROUP BY teamId
+        /// Grouped by some non-unique columns: SELECT ... FROM player GROUP BY teamId
         case nonUnique
     }
     
@@ -518,7 +518,7 @@ struct SQLQueryGenerator: Refinable {
     ///         let book = try Book(row: row)
     ///     }
     ///
-    /// But as soon as the selection includes columns of a included relation,
+    /// But as soon as the selection includes columns of an included relation,
     /// we need an adapter:
     ///
     ///     // SELECT book.*, author.* FROM book JOIN author ON author.id = book.authorId
@@ -542,7 +542,7 @@ struct SQLQueryGenerator: Refinable {
 /// expressions, etc, are qualified with table aliases.
 ///
 /// All those aliases let us disambiguate tables at the SQL level, and
-/// prefix columns names. For example, the following request...
+/// prefix column names. For example, the following request...
 ///
 ///      Book.filter(Column("kind") == Book.Kind.novel)
 ///          .including(optional: Book.author)
@@ -557,8 +557,8 @@ struct SQLQueryGenerator: Refinable {
 ///      LEFT JOIN person person1 ON person1.id = book.authorId
 ///      LEFT JOIN person person2 ON person2.id = book.translatorId
 ///      LEFT JOIN award ON award.bookId = book.id
-///      GROUP BY book.id
 ///      WHERE book.kind = 'novel'
+///      GROUP BY book.id
 ///
 /// `SQLQualifiedRelation` contains the following information:
 ///
@@ -659,7 +659,7 @@ private struct SQLQualifiedRelation: Sendable {
     ///   SQLQueryGenerator (as opposed to the joined relations).
     /// - returns: An optional tuple made of a RowAdapter and the index past the
     ///   rightmost selected column of this relation. Nil is returned if this
-    ///   relations does not need any row adapter.
+    ///   relation does not need any row adapter.
     func rowAdapter(
         _ context: SQLGenerationContext,
         fromIndex startIndex: Int,

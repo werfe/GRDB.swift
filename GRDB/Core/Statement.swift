@@ -24,7 +24,7 @@ extension String {
     /// SQL statements with `String.trimmedSQLStatement`.
     private static let sqlStatementSeparators = CharacterSet(charactersIn: ";").union(.whitespacesAndNewlines)
     
-    /// Returns a string trimmed from SQL statement separators.
+    /// Returns a string trimmed of SQL statement separators.
     ///
     /// For example:
     ///
@@ -47,6 +47,25 @@ public final class Statement {
         case rollbackSavepoint(String)
     }
     
+    /// The column names and indexes of a statement, for a given compilation
+    /// of the statement.
+    private struct ColumnCache {
+        var reprepareCount: CInt
+        var columnNames: [String]
+        /// Indexes of the leftmost columns. Keys are lowercase.
+        var columnIndexes: [String: Int]
+        
+        init(sqliteStatement: SQLiteStatement, reprepareCount: CInt) {
+            self.reprepareCount = reprepareCount
+            self.columnNames = (0..<sqlite3_column_count(sqliteStatement)).map {
+                String(cString: sqlite3_column_name(sqliteStatement, $0))
+            }
+            self.columnIndexes = Dictionary(
+                columnNames.enumerated().map { ($0.element.lowercased(), $0.offset) },
+                uniquingKeysWith: { (left, _) in left }) // keep leftmost indexes
+        }
+    }
+    
     /// The raw SQLite statement, suitable for the SQLite C API.
     public let sqliteStatement: SQLiteStatement
     
@@ -59,11 +78,9 @@ public final class Statement {
     }
     
     /// The column names, ordered from left to right.
-    public lazy var columnNames: [String] = {
-        // swiftlint:disable:next redundant_self
-        let sqliteStatement = self.sqliteStatement
-        return (0..<CInt(columnCount)).map { String(cString: sqlite3_column_name(sqliteStatement, $0)) }
-    }()
+    public var columnNames: [String] {
+        columnCache.columnNames
+    }
     
     // The database region is reported by `sqlite3_set_authorizer`, and maybe
     // refined in `SQLQueryGenerator.makeStatement(_:)` when we have enough
@@ -76,7 +93,7 @@ public final class Statement {
     ///
     /// ```swift
     /// // Reads score, writes bonus
-    /// let statement = db.makeStatement(sql: """
+    /// let statement = try db.makeStatement(sql: """
     ///     UPDATE player SET bonus = 0 WHERE score = 0
     ///     """)
     ///
@@ -89,13 +106,13 @@ public final class Statement {
     /// is executed (reported by `sqlite3_set_authorizer`).
     private(set) var invalidatesDatabaseSchemaCache = false
     
-    /// The eventual effect of transactions, as reported by `sqlite3_set_authorizer`.
+    /// The optional effect of transactions, as reported by `sqlite3_set_authorizer`.
     private(set) var transactionEffect: TransactionEffect?
     
     /// The effects on the database (reported by `sqlite3_set_authorizer`).
     private(set) var authorizerEventKinds: [DatabaseEventKind] = []
     
-    /// If true, the statement executes is a `PRAGMA QUERY_ONLY` statement.
+    /// If true, the statement is a `PRAGMA QUERY_ONLY` statement.
     private(set) var isQueryOnlyPragma = false
     
     /// A boolean value indicating if the prepared statement makes no direct
@@ -114,12 +131,29 @@ public final class Statement {
     @usableFromInline
     unowned let database: Database
     
-    /// Cache for index(ofColumn:). Keys are lowercase.
-    private lazy var columnIndexes: [String: Int] = {
-        Dictionary(
-            columnNames.enumerated().map { ($0.element.lowercased(), $0.offset) },
-            uniquingKeysWith: { (left, _) in left }) // keep leftmost indexes
-    }()
+    /// Indexes of the leftmost columns. Keys are lowercase.
+    var columnIndexes: [String: Int] {
+        columnCache.columnIndexes
+    }
+    
+    /// Storage for `columnCache`.
+    private var _columnCache: ColumnCache?
+    
+    /// The column names and indexes.
+    ///
+    /// SQLite recompiles statements after schema changes (see
+    /// <https://www.sqlite.org/c3ref/prepare.html>), and this can change
+    /// the result columns (think `SELECT *` after a column was added).
+    /// So the cache is rebuilt whenever the statement is recompiled.
+    private var columnCache: ColumnCache {
+        let reprepareCount = sqlite3_stmt_status(sqliteStatement, SQLITE_STMTSTATUS_REPREPARE, 0)
+        if let _columnCache, _columnCache.reprepareCount == reprepareCount {
+            return _columnCache
+        }
+        let columnCache = ColumnCache(sqliteStatement: sqliteStatement, reprepareCount: reprepareCount)
+        _columnCache = columnCache
+        return columnCache
+    }
     
     /// Creates a prepared statement. Returns nil if the compiled string is
     /// blank or empty.
@@ -243,7 +277,7 @@ public final class Statement {
     ///
     /// ```swift
     /// // This statement expects two arguments
-    /// let statement = try db.makeUpdateArgument(sql: """
+    /// let statement = try db.makeStatement(sql: """
     ///     INSERT INTO player (id, name) VALUES (?, ?)
     ///     """)
     ///
@@ -254,7 +288,7 @@ public final class Statement {
     /// print(statement.arguments)
     /// ```
     ///
-    /// If is a programmer error to set arguments that do not provide all
+    /// It is a programmer error to set arguments that do not provide all
     /// values expected by the statement:
     ///
     /// ```swift
@@ -275,23 +309,23 @@ public final class Statement {
         }
     }
     
-    /// Throws a ``DatabaseError`` of code `SQLITE_ERROR` if the provided
+    /// Throws a ``DatabaseError`` of code `SQLITE_MISUSE` if the provided
     /// arguments do not provide all values expected by the statement.
     ///
     /// For example:
     ///
     /// ```swift
     /// // This statement expects two arguments
-    /// let statement = try db.makeUpdateArgument(sql: """
+    /// let statement = try db.makeStatement(sql: """
     ///     INSERT INTO player (id, name) VALUES (?, ?)
     ///     """)
     ///
     /// // OK
-    /// statement.validateArguments([1, "Arthur"])
+    /// try statement.validateArguments([1, "Arthur"])
     ///
     /// // Throws
-    /// try statement.setArguments([1])
-    /// try statement.setArguments([1, "Arthur", Date()])
+    /// try statement.validateArguments([1])
+    /// try statement.validateArguments([1, "Arthur", Date()])
     /// ```
     ///
     /// See also ``setArguments(_:)``.
@@ -311,7 +345,7 @@ public final class Statement {
     ///
     /// ```swift
     /// // This statement expects two arguments
-    /// let statement = try db.makeUpdateArgument(sql: """
+    /// let statement = try db.makeStatement(sql: """
     ///     INSERT INTO player (id, name) VALUES (?, ?)
     ///     """)
     ///
@@ -354,7 +388,7 @@ public final class Statement {
     ///
     /// ```swift
     /// // This statement expects two arguments
-    /// let statement = try db.makeUpdateArgument(sql: """
+    /// let statement = try db.makeStatement(sql: """
     ///     INSERT INTO player (id, name) VALUES (?, ?)
     ///     """)
     ///
@@ -442,7 +476,7 @@ public final class Statement {
     }
     
     /// Convenience method that resets, sets arguments if needed, and checks
-    /// arguments validity.
+    /// argument validity.
     ///
     /// - parameter newArguments: if not nil, this method sets arguments.
     func prepareExecution(withArguments newArguments: StatementArguments? = nil) throws {
@@ -513,11 +547,11 @@ public final class Statement {
     /// }
     /// ```
     ///
-    /// When arguments are set at the moment of execution, with an non-nil
+    /// When arguments are set at the moment of execution, with a non-nil
     /// `arguments` parameter, it is assumed that the statement won't be
     /// reused with the same arguments. When the number of arguments is
     /// small, execution is performed with temporary SQLite bindings that
-    /// avoid copying strings and blobs arguments.
+    /// avoid copying string and blob arguments.
     ///
     /// For more information, see [`SQLITE_STATIC` and `SQLITE_TRANSIENT`](https://www.sqlite.org/c3ref/c_static.html).
     /// Compare:
@@ -533,7 +567,7 @@ public final class Statement {
     /// ```
     ///
     /// Both techniques have the same results, but when you care about
-    /// performances, monitor your application in order to make the
+    /// performance, monitor your application in order to make the
     /// best choice.
     ///
     /// - parameter arguments: Optional statement arguments.
@@ -582,7 +616,7 @@ public final class Statement {
     
     /// Calls the given closure after each successful call to `sqlite3_step()`.
     ///
-    /// This method is slighly faster than calling `step(_:)` repeatedly, due
+    /// This method is slightly faster than calling `step(_:)` repeatedly, due
     /// to the single `sqlite3_stmt_busy` check.
     @usableFromInline
     func forEachStep(_ body: (SQLiteStatement) throws -> Void) throws {
@@ -775,7 +809,7 @@ extension DatabaseCursor {
 /// ```swift
 /// try dbQueue.read { db in
 ///     let statement = try db.makeStatement(sql: "SELECT performSideEffect()")
-///     let cursor = statement.makeCursor()
+///     let cursor = try statement.makeCursor()
 ///     try cursor.next()
 /// }
 /// ```
@@ -891,13 +925,13 @@ func withBindings<T>(
 /// - `@AAAA` (e.g. `@name`): named argument
 /// - `$AAAA` (e.g. `$name`): named argument
 ///
-/// All forms are supported,  but GRDB does not allow to distinguish between
+/// All forms are supported, but GRDB does not allow you to distinguish between
 /// the `:AAAA`, `@AAAA`, and `$AAAA` syntaxes. You are encouraged to write
 /// named arguments with a colon prefix: `:name`.
 ///
 /// ## Positional Arguments
 ///
-/// To fill question marks placeholders, feed `StatementArguments` with an array:
+/// To fill question mark placeholders, feed `StatementArguments` with an array:
 ///
 /// ```swift
 /// try db.execute(
@@ -949,7 +983,7 @@ func withBindings<T>(
 /// arguments += ["name": "Barbara"]
 /// ```
 ///
-/// On the other side, `&+` and ``StatementArguments/append(contentsOf:)``
+/// On the other hand, `&+` and ``StatementArguments/append(contentsOf:)``
 /// allow overriding named arguments:
 ///
 /// ```swift
@@ -974,7 +1008,7 @@ func withBindings<T>(
 /// print(row)
 /// ```
 ///
-/// Mixed arguments exist as a support for requests like the following:
+/// Mixed arguments exist to support requests like the following:
 ///
 /// ```swift
 /// let players = try Player
@@ -1007,7 +1041,7 @@ public struct StatementArguments: Hashable {
     ///
     /// ```swift
     /// let values: [(any DatabaseValueConvertible)?] = ["foo", 1, nil]
-    /// db.execute(sql: "INSERT ... (?,?,?)", arguments: StatementArguments(values))
+    /// try db.execute(sql: "INSERT ... (?,?,?)", arguments: StatementArguments(values))
     /// ```
     public init(_ values: some Sequence<(any DatabaseValueConvertible)?>) {
         self.values = values.map { $0?.databaseValue ?? .null }
@@ -1020,7 +1054,7 @@ public struct StatementArguments: Hashable {
     ///
     /// ```swift
     /// let values: [String] = ["foo", "bar"]
-    /// db.execute(sql: "INSERT ... (?,?)", arguments: StatementArguments(values))
+    /// try db.execute(sql: "INSERT ... (?,?)", arguments: StatementArguments(values))
     /// ```
     public init(_ values: some Sequence<some DatabaseValueConvertible>) {
         self.values = values.map(\.databaseValue)
@@ -1055,7 +1089,7 @@ public struct StatementArguments: Hashable {
     ///
     /// ```swift
     /// let values: [String: (any DatabaseValueConvertible)?] = ["firstName": nil, "lastName": "Miller"]
-    /// db.execute(sql: "INSERT ... (:firstName, :lastName)", arguments: StatementArguments(values))
+    /// try db.execute(sql: "INSERT ... (:firstName, :lastName)", arguments: StatementArguments(values))
     /// ```
     public init(_ dictionary: [String: (any DatabaseValueConvertible)?]) {
         namedValues = dictionary.mapValues { $0?.databaseValue ?? .null }
@@ -1154,7 +1188,7 @@ public struct StatementArguments: Hashable {
         return replacedValues
     }
     
-    /// Creates a new `StatementArguments` by extending the left-hand size
+    /// Creates a new `StatementArguments` by extending the left-hand side
     /// arguments with the right-hand side arguments.
     ///
     /// Positional arguments are concatenated:
@@ -1175,7 +1209,7 @@ public struct StatementArguments: Hashable {
     /// print(arguments)
     /// ```
     ///
-    /// If the arguments on the right-hand side has named parameters that are
+    /// If the arguments on the right-hand side have named parameters that are
     /// already defined on the left, a fatal error is raised:
     ///
     /// ```swift
@@ -1202,7 +1236,7 @@ public struct StatementArguments: Hashable {
         return lhs
     }
     
-    /// Creates a new `StatementArguments` by extending the left-hand size
+    /// Creates a new `StatementArguments` by extending the left-hand side
     /// arguments with the right-hand side arguments.
     ///
     /// Positional arguments are concatenated:
@@ -1223,7 +1257,7 @@ public struct StatementArguments: Hashable {
     /// print(arguments)
     /// ```
     ///
-    /// If a named arguments is defined in both arguments, the right-hand
+    /// If a named argument is defined in both arguments, the right-hand
     /// side wins:
     ///
     /// ```swift
@@ -1248,7 +1282,7 @@ public struct StatementArguments: Hashable {
         return lhs
     }
     
-    /// Extends the left-hand size arguments with the right-hand side arguments.
+    /// Extends the left-hand side arguments with the right-hand side arguments.
     ///
     /// Positional arguments are concatenated:
     ///
@@ -1270,7 +1304,7 @@ public struct StatementArguments: Hashable {
     /// print(arguments)
     /// ```
     ///
-    /// If the arguments on the right-hand side has named parameters that are
+    /// If the arguments on the right-hand side have named parameters that are
     /// already defined on the left, a fatal error is raised:
     ///
     /// ```swift
@@ -1357,7 +1391,7 @@ extension StatementArguments: ExpressibleByArrayLiteral {
     /// ```swift
     /// let arguments: StatementArguments = ["Arthur", 41]
     /// try db.execute(
-    ///     sql: "INSERT INTO player (name, score) VALUES (?, ?)"
+    ///     sql: "INSERT INTO player (name, score) VALUES (?, ?)",
     ///     arguments: arguments)
     /// ```
     public init(arrayLiteral elements: (any DatabaseValueConvertible)?...) {
@@ -1373,7 +1407,7 @@ extension StatementArguments: ExpressibleByDictionaryLiteral {
     /// ```swift
     /// let arguments: StatementArguments = ["name": "Arthur", "score": 41]
     /// try db.execute(
-    ///     sql: "INSERT INTO player (name, score) VALUES (:name, :score)"
+    ///     sql: "INSERT INTO player (name, score) VALUES (:name, :score)",
     ///     arguments: arguments)
     /// ```
     public init(dictionaryLiteral elements: (String, (any DatabaseValueConvertible)?)...) {

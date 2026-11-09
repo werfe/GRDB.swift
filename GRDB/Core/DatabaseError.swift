@@ -29,7 +29,7 @@ public struct ResultCode: RawRepresentable, Equatable {
     /// For example:
     ///
     /// ```swift
-    /// let resultCode = .SQLITE_CONSTRAINT_FOREIGNKEY
+    /// let resultCode = ResultCode.SQLITE_CONSTRAINT_FOREIGNKEY
     /// resultCode.primaryResultCode == .SQLITE_CONSTRAINT // true
     /// ```
     public var primaryResultCode: ResultCode {
@@ -288,7 +288,7 @@ public struct DatabaseError: Error {
     /// ```swift
     /// do {
     ///     ...
-    /// } catch let error as DatabaseError where error.resultCode == .SQL_CONSTRAINT {
+    /// } catch let error as DatabaseError where error.resultCode == .SQLITE_CONSTRAINT {
     ///     // A constraint error
     /// }
     /// ```
@@ -298,7 +298,7 @@ public struct DatabaseError: Error {
     /// ```swift
     /// do {
     ///     ...
-    /// } catch DatabaseError.SQL_CONSTRAINT {
+    /// } catch DatabaseError.SQLITE_CONSTRAINT {
     ///     // A constraint error
     /// }
     /// ```
@@ -353,10 +353,10 @@ public struct DatabaseError: Error {
     ///
     /// - parameters:
     ///     - resultCode: A ResultCode (defaults to .SQLITE_ERROR).
-    ///     - message: An eventual error message. If nil, the error message is
+    ///     - message: An optional error message. If nil, the error message is
     ///       derived from the result code.
-    ///     - sql: An eventual SQL string.
-    ///     - arguments: Eventual statement arguments.
+    ///     - sql: An optional SQL string.
+    ///     - arguments: Optional statement arguments.
     ///     - publicStatementArguments: If false (the default), statement
     ///       arguments are not visible in the error's ``description`` property.
     public init(
@@ -375,7 +375,7 @@ public struct DatabaseError: Error {
     
     /// Creates a Database Error with a raw CInt result code.
     ///
-    /// This initializer is not public because library user is not supposed to
+    /// This initializer is not public because library users are not supposed to
     /// be exposed to raw result codes.
     @usableFromInline
     init(resultCode: CInt, message: String? = nil, sql: String? = nil) {
@@ -387,7 +387,7 @@ public struct DatabaseError: Error {
     
     /// Creates a Database Error with a raw CInt result code.
     ///
-    /// This initializer is not public because library user is not supposed to
+    /// This initializer is not public because library users are not supposed to
     /// be exposed to raw result codes.
     @usableFromInline
     init(
@@ -559,7 +559,7 @@ extension DatabaseError: CustomStringConvertible {
     /// For example:
     ///
     ///     SQLite error 19: NOT NULL constraint failed: player.score
-    ///     - while executing `UPDATE player SET score = ? WHERE email = ?
+    ///     - while executing `UPDATE player SET score = ? WHERE email = ?`
     ///
     /// The format of the error description may change between GRDB releases,
     /// without notice: don't have your application rely on any specific format.
@@ -582,7 +582,7 @@ extension DatabaseError: CustomStringConvertible {
     /// For example:
     ///
     ///     SQLite error 19: NOT NULL constraint failed: player.score
-    ///     - while executing `UPDATE player SET score = ? WHERE email = ?
+    ///     - while executing `UPDATE player SET score = ? WHERE email = ?`
     ///     with arguments [nil, "arthur@example.com"]
     ///
     /// The format of the error description may change between GRDB releases,

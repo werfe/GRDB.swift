@@ -35,7 +35,7 @@ extension TableRecord {
     /// }
     /// ```
     ///
-    /// The association can also help fetching associated records:
+    /// The association can also help fetch associated records:
     ///
     /// ```swift
     /// try dbQueue.read { db in
@@ -56,7 +56,7 @@ extension TableRecord {
     ///     - destination: The record type at the other side of the association.
     ///     - key: The association key. By default, it
     ///       is `Destination.databaseTableName`.
-    ///     - foreignKey: An eventual foreign key. You need to provide one when
+    ///     - foreignKey: An optional foreign key. You need to provide one when
     ///       no foreign key exists to the destination table, or several foreign
     ///       keys exist.
     public static func belongsTo<Destination>(
@@ -106,7 +106,7 @@ extension TableRecord {
     /// }
     /// ```
     ///
-    /// The association can also help fetching associated records:
+    /// The association can also help fetch associated records:
     ///
     /// ```swift
     /// try dbQueue.read { db in
@@ -127,7 +127,7 @@ extension TableRecord {
     ///     - destination: The record type at the other side of the association.
     ///     - key: The association key. By default, it
     ///       is `Destination.databaseTableName`.
-    ///     - foreignKey: An eventual foreign key. You need to provide one when
+    ///     - foreignKey: An optional foreign key. You need to provide one when
     ///       no foreign key exists to the destination table, or several foreign
     ///       keys exist.
     public static func hasMany<Destination>(
@@ -158,7 +158,7 @@ extension TableRecord {
     /// The association lets you define requests that involve both the source
     /// and the destination type.
     ///
-    /// For example, we can fetch all countries with their eventual demographics:
+    /// For example, we can fetch all countries with their optional demographics:
     ///
     /// ```swift
     /// struct CountryInfo: FetchableRecord, Decodable {
@@ -182,7 +182,7 @@ extension TableRecord {
     /// }
     /// ```
     ///
-    /// The association can also help fetching associated records:
+    /// The association can also help fetch associated records:
     ///
     /// ```swift
     /// try dbQueue.read { db in
@@ -203,7 +203,7 @@ extension TableRecord {
     ///     - destination: The record type at the other side of the association.
     ///     - key: The association key. By default, it
     ///       is `Destination.databaseTableName`.
-    ///     - foreignKey: An eventual foreign key. You need to provide one when
+    ///     - foreignKey: An optional foreign key. You need to provide one when
     ///       no foreign key exists to the destination table, or several foreign
     ///       keys exist.
     public static func hasOne<Destination>(
@@ -232,7 +232,7 @@ extension TableRecord {
     ///     - destination: The table at the other side of the association.
     ///     - key: The association key. By default, it
     ///       is `destination.tableName`.
-    ///     - foreignKey: An eventual foreign key. You need to provide one when
+    ///     - foreignKey: An optional foreign key. You need to provide one when
     ///       no foreign key exists to the destination table, or several foreign
     ///       keys exist.
     public static func belongsTo<Destination>(
@@ -256,7 +256,7 @@ extension TableRecord {
     ///     - destination: The table at the other side of the association.
     ///     - key: The association key. By default, it
     ///       is `destination.tableName`.
-    ///     - foreignKey: An eventual foreign key. You need to provide one when
+    ///     - foreignKey: An optional foreign key. You need to provide one when
     ///       no foreign key exists to the destination table, or several foreign
     ///       keys exist.
     public static func hasMany<Destination>(
@@ -280,7 +280,7 @@ extension TableRecord {
     ///     - destination: The table at the other side of the association.
     ///     - key: The association key. By default, it
     ///       is `destination.tableName`.
-    ///     - foreignKey: An eventual foreign key. You need to provide one when
+    ///     - foreignKey: An optional foreign key. You need to provide one when
     ///       no foreign key exists to the destination table, or several foreign
     ///       keys exist.
     public static func hasOne<Destination>(
@@ -425,7 +425,7 @@ extension TableRecord {
     /// }
     /// ```
     ///
-    /// The association can also help fetching associated records:
+    /// The association can also help fetch associated records:
     ///
     /// ```swift
     /// try dbQueue.read { db in
@@ -511,7 +511,7 @@ extension TableRecord {
     /// }
     /// ```
     ///
-    /// The association can also help fetching associated records:
+    /// The association can also help fetch associated records:
     ///
     /// ```swift
     /// try dbQueue.read { db in
@@ -586,7 +586,7 @@ extension TableRecord where Self: EncodableRecord {
             
         case let .foreignKey(foreignKey):
             // Build the sendable persistence container before building the
-            // request, and catch the eventual error in a Result, so that it
+            // request, and catch any error in a Result, so that it
             // is thrown later, when the request is executed. This allows
             // this method to not throw:
             //
@@ -645,10 +645,10 @@ extension TableRecord {
         all().including(all: association)
     }
     
-    /// Returns a request that fetches the eventual record associated with each
+    /// Returns a request that fetches the optional record associated with each
     /// record of this request.
     ///
-    /// For example, we can fetch books along with their eventual author:
+    /// For example, we can fetch books along with their optional author:
     ///
     /// ```swift
     /// struct Author: TableRecord, FetchableRecord, Decodable { }
@@ -677,7 +677,7 @@ extension TableRecord {
     /// this request. Records that do not have an associated record
     /// are discarded.
     ///
-    /// For example, we can fetch books along with their eventual author:
+    /// For example, we can fetch books along with their author:
     ///
     /// ```swift
     /// struct Author: TableRecord, FetchableRecord, Decodable { }
@@ -703,7 +703,7 @@ extension TableRecord {
     }
     
     /// Returns a request that joins each record of this request to its
-    /// eventual associated record.
+    /// optional associated record.
     public static func joining<A: Association>(optional association: A)
     -> QueryInterfaceRequest<Self>
     where A.OriginRowDecoder == Self
@@ -740,7 +740,7 @@ extension TableRecord {
         all().joining(required: association)
     }
     
-    /// Returns a request with the columns of the eventual associated record
+    /// Returns a request with the columns of the optional associated record
     /// appended to the record selection.
     ///
     /// The record selection is determined by

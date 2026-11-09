@@ -74,7 +74,7 @@ extension AssociationToMany {
     /// ```swift
     /// struct TeamInfo: FetchableRecord, Decodable {
     ///     var team: Team
-    ///     var hasNoPlayer: Int
+    ///     var hasNoPlayer: Bool
     /// }
     ///
     /// try dbQueue.read { db in
@@ -206,13 +206,13 @@ extension AssociationToMany {
     /// ```
     ///
     /// When the input expression is a ``ColumnExpression``, the returned
-    /// association aggregate is named `"maximum[Key][Column]"`, where `key` is
+    /// association aggregate is named `"max[Key][Column]"`, where `key` is
     /// the association key. For example:
     ///
     /// ```swift
     /// struct TeamInfo: FetchableRecord, Decodable {
     ///     var team: Team
-    ///     var maximumPlayerScore: Double
+    ///     var maxPlayerScore: Double
     /// }
     ///
     /// try dbQueue.read { db in
@@ -258,13 +258,13 @@ extension AssociationToMany {
     /// ```
     ///
     /// When the input expression is a ``ColumnExpression``, the returned
-    /// association aggregate is named `"maximum[Key][Column]"`, where `key` is
+    /// association aggregate is named `"max[Key][Column]"`, where `key` is
     /// the association key. For example:
     ///
     /// ```swift
     /// struct TeamInfo: FetchableRecord, Decodable {
     ///     var team: Team
-    ///     var maximumPlayerScore: Double
+    ///     var maxPlayerScore: Double
     /// }
     ///
     /// try dbQueue.read { db in
@@ -303,13 +303,13 @@ extension AssociationToMany {
     /// ```
     ///
     /// When the input expression is a ``ColumnExpression``, the returned
-    /// association aggregate is named `"minimum[Key][Column]"`, where `key` is
+    /// association aggregate is named `"min[Key][Column]"`, where `key` is
     /// the association key. For example:
     ///
     /// ```swift
     /// struct TeamInfo: FetchableRecord, Decodable {
     ///     var team: Team
-    ///     var minimumPlayerScore: Double
+    ///     var minPlayerScore: Double
     /// }
     ///
     /// try dbQueue.read { db in
@@ -355,13 +355,13 @@ extension AssociationToMany {
     /// ```
     ///
     /// When the input expression is a ``ColumnExpression``, the returned
-    /// association aggregate is named `"minimum[Key][Column]"`, where `key` is
+    /// association aggregate is named `"min[Key][Column]"`, where `key` is
     /// the association key. For example:
     ///
     /// ```swift
     /// struct TeamInfo: FetchableRecord, Decodable {
     ///     var team: Team
-    ///     var minimumPlayerScore: Double
+    ///     var minPlayerScore: Double
     /// }
     ///
     /// try dbQueue.read { db in
@@ -669,7 +669,7 @@ public struct AssociationAggregate<RowDecoder> {
     ///
     /// - We don't know yet if the aggregated expression will be used in the
     ///   SQL selection, or in the HAVING clause.
-    /// - It helps implementing aggregate operators such as `&&`, `+`, etc.
+    /// - It helps implement aggregate operators such as `&&`, `+`, etc.
     func prepare(_ request: inout some DerivableRequest<RowDecoder>) -> SQLExpression {
         preparation.prepare(&request)
     }
@@ -688,11 +688,11 @@ extension AssociationAggregate: Refinable {
     ///
     /// struct TeamInfo: FetchableRecord, Decodable {
     ///     var team: Team
-    ///     var numberOfBooks: Int
+    ///     var numberOfPlayers: Int
     /// }
     ///
     /// try dbQueue.read { db in
-    ///     let playerCount = Team.players.count.forKey("numberOfBooks")
+    ///     let playerCount = Team.players.count.forKey("numberOfPlayers")
     ///
     ///     let infos: [TeamInfo] = try Team
     ///         .annotated(with: playerCount)
@@ -706,7 +706,7 @@ extension AssociationAggregate: Refinable {
         }
     }
     
-    /// Returns an aggregate that is selected in a column named like the given
+    /// Returns an aggregate that is selected in a column named after the given
     /// coding key.
     ///
     /// See ``forKey(_:)-1rvux``.
@@ -811,7 +811,7 @@ private class CombinePreparation<RowDecoder>: AssociationAggregatePreparation<Ro
     }
 }
 
-/// Combines the expression of two aggregates.
+/// Combines the expressions of two aggregates.
 private func combine<RowDecoder>(
     _ lhs: AssociationAggregate<RowDecoder>,
     _ rhs: AssociationAggregate<RowDecoder>,

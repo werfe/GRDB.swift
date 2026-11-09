@@ -97,7 +97,7 @@ public protocol FetchRequest<RowDecoder>: SQLSubqueryable, DatabaseRegionConvert
 }
 
 extension FetchRequest {
-    /// Returns the database region that the request feeds from.
+    /// Returns the database region that the request looks into.
     ///
     /// - parameter db: A database connection.
     public func databaseRegion(_ db: Database) throws -> DatabaseRegion {
@@ -134,7 +134,7 @@ public struct PreparedRequest {
     /// A prepared statement with bound parameters.
     public var statement: Statement
     
-    /// An eventual adapter for rows fetched by the select statement.
+    /// An optional adapter for rows fetched by the select statement.
     public var adapter: (any RowAdapter)?
     
     /// A closure that performs supplementary fetches.
@@ -166,7 +166,7 @@ extension FetchRequest {
     ///
     /// The returned request performs an identical database query, but adapts
     /// the fetched rows. See ``RowAdapter``, and
-    /// ``splittingRowAdapters(columnCounts:)`` for a sample code that uses
+    /// ``splittingRowAdapters(columnCounts:)`` for sample code that uses
     /// `adapted(_:)`.
     ///
     /// - parameter adapter: A closure that accepts a database connection and

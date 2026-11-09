@@ -12,7 +12,7 @@ public struct TableOptions: OptionSet, Sendable {
     
     /// Creates a [`WITHOUT ROWID`](https://www.sqlite.org/withoutrowid.html) table.
     ///
-    /// Such tables can not be tracked with <doc:DatabaseObservation> tools.
+    /// Such tables cannot be tracked with <doc:DatabaseObservation> tools.
     public static let withoutRowID = TableOptions(rawValue: 1 << 2)
     
 #if GRDBCUSTOMSQLITE || SQLITE_HAS_CODEC
@@ -63,7 +63,7 @@ public struct TableOptions: OptionSet, Sendable {
 ///
 /// - ``uniqueKey(_:onConflict:)``
 ///
-/// ### Define Others Constraints
+/// ### Define Other Constraints
 ///
 /// - ``check(_:)-6u1za``
 /// - ``check(_:)-jpcg``
@@ -240,7 +240,7 @@ public final class TableDefinition {
     /// Related SQLite documentation: <https://www.sqlite.org/lang_createtable.html#tablecoldef>
     ///
     /// - parameter name: the column name.
-    /// - parameter type: the eventual column type.
+    /// - parameter type: the optional column type.
     /// - returns: A ``ColumnDefinition`` that allows you to refine the
     ///   column definition.
     @discardableResult
@@ -289,7 +289,7 @@ public final class TableDefinition {
     /// }
     /// ```
     public func column(literal: SQL) {
-        GRDBPrecondition(!inPrimaryKeyBody, "Primary key columns can not be defined with raw SQL")
+        GRDBPrecondition(!inPrimaryKeyBody, "Primary key columns cannot be defined with raw SQL")
         columnComponents.append(.columnLiteral(literal))
     }
     
@@ -372,7 +372,7 @@ public final class TableDefinition {
     /// // CREATE TABLE passport (
     /// //   issueDate DATE NOT NULL,
     /// //   citizenId INTEGER NOT NULL,
-    /// //   countryCode INTEGER NOT NULL,
+    /// //   countryCode TEXT NOT NULL,
     /// //   FOREIGN KEY (citizenId, countryCode)
     /// //     REFERENCES citizenship(citizenId, countryCode)
     /// //     ON DELETE CASCADE
@@ -450,7 +450,7 @@ public final class TableDefinition {
     /// // CREATE TABLE player (
     /// //   id INTEGER PRIMARY KEY AUTOINCREMENT,
     /// //   teamId INTEGER REFERENCES team(id),
-    /// //   countryCode TEXT NOT NULL REFERENCES country(code),
+    /// //   countryCode TEXT NOT NULL REFERENCES country(code)
     /// // )
     /// try db.create(table: "player") { t in
     ///     t.autoIncrementedPrimaryKey("id")
@@ -478,7 +478,7 @@ public final class TableDefinition {
     ///
     /// // CREATE TABLE players (
     /// //   teamId INTEGER REFERENCES teams(id),
-    /// //   countryCode TEXT REFERENCES countries(code),
+    /// //   countryCode TEXT REFERENCES countries(code)
     /// // )
     /// try db.create(table: "players") { t in
     ///     t.belongsTo("team")
@@ -492,7 +492,7 @@ public final class TableDefinition {
     /// ```swift
     /// // CREATE TABLE player (
     /// //   id INTEGER PRIMARY KEY AUTOINCREMENT,
-    /// //   captainId INTEGER REFERENCES player(id),
+    /// //   captainId INTEGER REFERENCES player(id)
     /// // )
     /// try db.create(table: "player") { t in
     ///     t.autoIncrementedPrimaryKey("id")
@@ -613,7 +613,7 @@ public final class TableDefinition {
     /// // CREATE TABLE player (
     /// //   personalPhone TEXT,
     /// //   workPhone TEXT,
-    /// //   CHECK personalPhone IS NOT NULL OR workPhone IS NOT NULL
+    /// //   CHECK (personalPhone IS NOT NULL OR workPhone IS NOT NULL)
     /// // )
     /// try db.create(table: "player") { t in
     ///     t.column("personalPhone", .text)
@@ -652,7 +652,7 @@ public final class TableDefinition {
     /// // CREATE TABLE player (
     /// //   personalPhone TEXT,
     /// //   workPhone TEXT,
-    /// //   CHECK personalPhone IS NOT NULL OR workPhone IS NOT NULL
+    /// //   CHECK (personalPhone IS NOT NULL OR workPhone IS NOT NULL)
     /// // )
     /// try db.create(table: "player") { t in
     ///     t.column("personalPhone", .text)
@@ -690,7 +690,7 @@ public final class TableDefinition {
     /// // CREATE TABLE player (
     /// //   personalPhone TEXT,
     /// //   workPhone TEXT,
-    /// //   CHECK personalPhone IS NOT NULL OR workPhone IS NOT NULL
+    /// //   CHECK (personalPhone IS NOT NULL OR workPhone IS NOT NULL)
     /// // )
     /// try db.create(table: "player") { t in
     ///     t.column("personalPhone", .text)

@@ -46,7 +46,7 @@ final class StatementAuthorizer {
     /// savepoint statement.
     var transactionEffect: Statement.TransactionEffect?
     
-    /// If true, the statement executes is a `PRAGMA QUERY_ONLY` statement.
+    /// If true, the statement is a `PRAGMA QUERY_ONLY` statement.
     var isQueryOnlyPragma = false
     
     private var isDropStatement = false
@@ -117,10 +117,10 @@ final class StatementAuthorizer {
             guard let columnName = cString2.map(String.init) else { return SQLITE_OK }
             if columnName.isEmpty {
                 // SELECT COUNT(*) FROM table
-                selectedRegion.formUnion(DatabaseRegion(table: tableName))
+                selectedRegion.insert(table: tableName)
             } else {
                 // SELECT column FROM table
-                selectedRegion.formUnion(DatabaseRegion(table: tableName, columns: [columnName]))
+                selectedRegion.insert(table: tableName, column: columnName)
             }
             return SQLITE_OK
             

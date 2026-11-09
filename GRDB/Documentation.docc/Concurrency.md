@@ -20,7 +20,7 @@ Open one single ``DatabaseQueue`` or ``DatabasePool`` per database file, for the
 
 - *Why does this rule exist?* - Since SQLite does not support parallel writes, each `DatabaseQueue` and `DatabasePool` makes sure application threads perform writes one by one, without overlap.
 
-- *Practical advice* - An app that uses a single database will connect only once. A document-based app will connect each time a document is opened, and disconnect when the document is closed. See the [demo apps] in order to see how to setup a UIKit or SwiftUI application for a single database.
+- *Practical advice* - An app that uses a single database will connect only once. A document-based app will connect each time a document is opened, and disconnect when the document is closed. See the [demo apps] in order to see how to set up a UIKit or SwiftUI application for a single database.
 
 - *What if you do not follow this rule?*
     
@@ -29,9 +29,9 @@ Open one single ``DatabaseQueue`` or ``DatabasePool`` per database file, for the
 
 #### Rule 2: Mind your transactions
 
-Database operations that are grouped in a transaction are guaranteed to be either fully saved on disk, or not at all. Read-only transactions guarantee a stable and immutable view of the database, and do not see changes performed by eventual concurrent writes.
+Database operations that are grouped in a transaction are guaranteed to be either fully saved on disk, or not at all. Read-only transactions guarantee a stable and immutable view of the database, and do not see changes performed by concurrent writes.
 
-In other words, transactions are the one and single tool that helps you enforce and rely on the invariants of your database (such as "all authors must have at least one book").
+In other words, transactions are the one and only tool that helps you enforce and rely on the invariants of your database (such as "all authors must have at least one book").
 
 **You are responsible**, in your Swift code, for delimiting transactions. You do so by grouping database accesses inside a pair of `{ db in ... }` brackets:
 
@@ -40,18 +40,18 @@ try dbQueue.write { db in
     // Inside a transaction
 }
 
-try dbQueue.read { db
+try dbQueue.read { db in
     // Inside a transaction
 }
 ```
 
 Alternatively, you can open an explicit transaction or savepoint: see <doc:Transactions>.
 
-- *Why does this rule exist?* - Because GRDB and SQLite can not guess where to insert the transaction boundaries that protect the invariants of your database. This is your task. Transactions also avoid concurrency problems, as described in the <doc:Concurrency#Safe-and-Unsafe-Database-Accesses> section below. 
+- *Why does this rule exist?* - Because GRDB and SQLite cannot guess where to insert the transaction boundaries that protect the invariants of your database. This is your task. Transactions also avoid concurrency problems, as described in the <doc:Concurrency#Safe-and-Unsafe-Database-Accesses> section below. 
 
 - *Practical advice* - Take the time to identify the invariants of your database. Some of them can be enforced in the database schema itself, such as "all books must have a non-empty title", or "all books must have an author" (see <doc:DatabaseSchema>). Some invariants can only be enforced by transactions, such as "all account credits must have a matching debit", or "all authors must have at least one book".
 
-- *What if you do not follow this rule?* - You will see broken database invariants, at runtime, or when your apps wakes up after a crash. These bugs corrupt user data, and are very difficult to fix.
+- *What if you do not follow this rule?* - You will see broken database invariants, at runtime, or when your app wakes up after a crash. These bugs corrupt user data, and are very difficult to fix.
 
 
 ## Synchronous and Asynchronous Database Accesses
@@ -101,7 +101,7 @@ try dbQueue.write { db in
     
     Note the identical method names: `read`, `write`. The async version is only available in async Swift functions.
     
-    The async database access methods honor task cancellation. Once an async Task is cancelled, reads and writes throw `CancellationError`, and any transaction is rollbacked.
+    The async database access methods honor task cancellation. Once an async Task is cancelled, reads and writes throw `CancellationError`, and any transaction is rolled back.
     
     See <doc:SwiftConcurrency> for more information about GRDB and Swift 6.
 
@@ -162,13 +162,13 @@ This guarantee prevents [`SQLITE_BUSY`] errors during concurrent writes.
 
 **All writes are wrapped in a transaction.**
 
-Concurrent reads can not see partial database updates (even reads performed by other processes).
+Concurrent reads cannot see partial database updates (even reads performed by other processes).
 
 #### Isolated Reads
 
 **All reads are wrapped in a transaction.**
 
-An isolated read sees a stable and immutable state of the database, and does not see changes performed by eventual concurrent writes (even writes performed by other processes). See [Isolation In SQLite](https://www.sqlite.org/isolation.html) for more information.
+An isolated read sees a stable and immutable state of the database, and does not see changes performed by concurrent writes (even writes performed by other processes). See [Isolation In SQLite](https://www.sqlite.org/isolation.html) for more information.
 
 #### Forbidden Writes
 
@@ -178,7 +178,7 @@ This enforces the immutability of the database during a read.
 
 #### Non-Reentrancy
 
-**Database accesses methods are not reentrant.**
+**Database access methods are not reentrant.**
 
 This reduces the opportunities for deadlocks, and fosters the clear transaction boundaries of <doc:Concurrency#Rule-2:-Mind-your-transactions>.
 
@@ -202,7 +202,7 @@ Some applications need to relax this safety net, in order to achieve specific SQ
     
     See ``DatabaseReader/unsafeReentrantRead(_:)``.
 
-> Important: By using one of the methods above, you become responsible of the thread-safety of your application. Please understand the consequences of lifting each concurrency guarantee.
+> Important: By using one of the methods above, you become responsible for the thread-safety of your application. Please understand the consequences of lifting each concurrency guarantee.
 
 Some concurrency guarantees can be restored at your convenience:
 
@@ -228,7 +228,7 @@ Despite the common guarantees and rules shared by database queues and pools, tho
 
 ![DatabasePool Scheduling](DatabasePoolScheduling.png)
 
-See how, with database pools, two reads can see different database states at the same time. This may look scary! Please see the next chapter below for a relief.
+See how, with database pools, two reads can see different database states at the same time. This may look scary! Please see the next chapter below for some relief.
 
 ## Concurrent Thinking
 
@@ -248,7 +248,7 @@ All you need is a little "concurrent thinking", based on those two basic facts:
     
     ```swift
     // or dbQueue.write, for that matter
-    let cookieCount = dbPool.read { db in
+    let cookieCount = try dbPool.read { db in
         try Cookie.fetchCount(db)
     }
     
@@ -259,13 +259,13 @@ All you need is a little "concurrent thinking", based on those two basic facts:
     
     Does this mean you can't rely on anything? Of course not:
     
-    - If you intend to display some database value on screen, use ``ValueObservation``: it always eventually notifies the latest state of the database. Your application won't display stale values for a long time: after the database has been changed on disk, the fresh value if fetched, and soon notified on the main thread where the screen can be updated.
+    - If you intend to display some database value on screen, use ``ValueObservation``: it always eventually notifies the latest state of the database. Your application won't display stale values for a long time: after the database has been changed on disk, the fresh value is fetched, and soon notified on the main thread where the screen can be updated.
     
     - As said above, the moment of truth is the next write access!
 
 ## Advanced DatabasePool
 
-``DatabasePool`` is very concurrent, since all reads can run in parallel, and can even run during write operations. But writes are still serialized: at any given point in time, there is no more than a single thread that is writing into the database.
+``DatabasePool`` is highly concurrent, since all reads can run in parallel, and can even run during write operations. But writes are still serialized: at any given point in time, there is no more than a single thread that is writing into the database.
 
 When your application modifies the database, and then reads some value that depends on those modifications, you may want to avoid blocking concurrent writes longer than necessary - especially when the read is slow:
 
@@ -302,7 +302,7 @@ try dbPool.writeWithoutTransaction { db in
 }
 ```
 
-The ``DatabasePool/asyncConcurrentRead(_:)`` method blocks until it can guarantee its closure argument an isolated access to the database, in the exact state left by the last transaction. It then asynchronously executes the closure.
+The ``DatabasePool/asyncConcurrentRead(_:)`` method blocks until it can guarantee its closure argument isolated access to the database, in the exact state left by the last transaction. It then asynchronously executes the closure.
 
 In the illustration below, the striped band shows the delay needed for the reading thread to acquire isolation. Until then, no other thread can write:
 

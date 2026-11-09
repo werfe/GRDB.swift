@@ -1,4 +1,4 @@
-/// Describe the progress of a database backup.
+/// Describes the progress of a database backup.
 ///
 /// Related SQLite documentation: <https://www.sqlite.org/c3ref/backup_finish.html>
 public struct DatabaseBackupProgress: Sendable {
@@ -21,7 +21,7 @@ public struct DatabaseBackupProgress: Sendable {
     
     /// A boolean value indicating whether the backup is complete.
     ///
-    /// It is true if and only if the last call the `sqlite3_backup_step` has
+    /// It is true if and only if the last call to `sqlite3_backup_step` has
     /// returned `SQLITE_DONE`.
     public let isCompleted: Bool
 }

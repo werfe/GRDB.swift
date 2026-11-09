@@ -5,11 +5,11 @@ By default, GRDB uses the version of SQLite that ships with the target operating
 
 **You can build GRDB with a custom build of [SQLite 3.47.2](https://www.sqlite.org/changes.html).**
 
-A custom SQLite build can activate extra SQLite features, and extra GRDB features as well, such as support for the [FTS5 full-text search engine](../../../#full-text-search), and [SQLite Pre-Update Hooks](https://swiftpackageindex.com/groue/GRDB.swift/documentation/grdb/transactionobserver).
+A custom SQLite build can activate extra SQLite features, and extra GRDB features as well, such as support for the [FTS5 full-text search engine](FullTextSearch.md), and [SQLite Pre-Update Hooks](https://swiftpackageindex.com/groue/GRDB.swift/documentation/grdb/transactionobserver).
 
 GRDB builds SQLite with [swiftlyfalling/SQLiteLib](https://github.com/swiftlyfalling/SQLiteLib), which uses the same SQLite configuration as the one used by Apple in its operating systems, and lets you add extra compilation options that leverage the features you need.
 
-> Warning: The technique described here is not compatible with the Swift Package Manager (SPM). It will create [build issues](https://github.com/groue/GRDB.swift/issues/1709) with SPM companion librairies such as [GRDBQuery](https://github.com/groue/GRDBQuery) or [GRDBSnapshotTesting](https://github.com/groue/GRDBSnapshotTesting).   
+> Warning: The technique described here is not compatible with the Swift Package Manager (SPM). It will create [build issues](https://github.com/groue/GRDB.swift/issues/1709) with SPM companion libraries such as [GRDBQuery](https://github.com/groue/GRDBQuery) or [GRDBSnapshotTesting](https://github.com/groue/GRDBSnapshotTesting).   
 
 **To install GRDB with a custom SQLite build:**
 
@@ -109,7 +109,7 @@ GRDB builds SQLite with [swiftlyfalling/SQLiteLib](https://github.com/swiftlyfal
         echo "Finished syncing"
         ```
 
-        Modify the top of `GRDBCustomSQLite-INSTALL.sh` file so that it contains correct paths.
+        Modify the top of the `GRDBCustomSQLite-INSTALL.sh` file so that it contains correct paths.
 
 5. Embed the `GRDBCustom.xcodeproj` project in your own project.
 

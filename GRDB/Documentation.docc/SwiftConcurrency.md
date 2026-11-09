@@ -33,9 +33,9 @@ for try await players in observation.values(in: writer) {
 }
 ```
 
-`DatabaseQueue` serializes all database accesses, when `DatabasePool` allows parallel reads and writes. The common ``DatabaseWriter`` protocol provides the [SQLite isolation guarantees](https://www.sqlite.org/isolation.html) that abstract away the differences between the two connection types, without sacrificing data integrity. See the <doc:Concurrency> guide for more information.
+`DatabaseQueue` serializes all database accesses, whereas `DatabasePool` allows parallel reads and writes. The common ``DatabaseWriter`` protocol provides the [SQLite isolation guarantees](https://www.sqlite.org/isolation.html) that abstract away the differences between the two connection types, without sacrificing data integrity. See the <doc:Concurrency> guide for more information.
 
-All safety guarantees of Swift 6 are enforced during database accesses. They are controlled by the language mode and level of concurrency checkings used by your application, as described in [Migrating to Swift 6] on swift.org. 
+All safety guarantees of Swift 6 are enforced during database accesses. They are controlled by the language mode and level of concurrency checking used by your application, as described in [Migrating to Swift 6] on swift.org. 
 
 The following sections describe, with more details, how GRDB interacts with Swift Concurrency.
 
@@ -83,7 +83,7 @@ This language feature is not enabled by default, because it can potentially [aff
 
 ### Non-Sendable Configuration of Record Types
 
-In the Swift 6 language mode, and in the Swift 5 language mode with strict concurrency checkings, the compiler emits an error or a warning when a record type specifies which columns it fetches from the database, with the ``TableRecord/databaseSelection-7iphs`` static property:
+In the Swift 6 language mode, and in the Swift 5 language mode with strict concurrency checking, the compiler emits an error or a warning when a record type specifies which columns it fetches from the database, with the ``TableRecord/databaseSelection-7iphs`` static property:
 
 ```swift
 extension Player: FetchableRecord, PersistableRecord {
@@ -114,7 +114,7 @@ extension Player: FetchableRecord, PersistableRecord {
 
 ### Non-Sendable Record Types
 
-In the Swift 6 language mode, and in the Swift 5 language mode with strict concurrency checkings, the compiler emits an error or a warning when the application reads, writes, or observes a non-[`Sendable`](https://developer.apple.com/documentation/swift/sendable) type.
+In the Swift 6 language mode, and in the Swift 5 language mode with strict concurrency checking, the compiler emits an error or a warning when the application reads, writes, or observes a non-[`Sendable`](https://developer.apple.com/documentation/swift/sendable) type.
 
 By default, Swift classes are not Sendable. They are not thread-safe. With GRDB, record classes will typically trigger compiler diagnostics:
 
@@ -135,7 +135,7 @@ let player = try await writer.read { db in
 
 // ❌ Capture of 'player' with non-sendable type 'Player' in a `@Sendable` closure
 let player: Player
-try await writer.read { db in
+try await writer.write { db in
     try player.insert(db)
 }
 
@@ -149,7 +149,7 @@ let observation = ValueObservation.tracking { db in
 
 The solution is to have the record type conform to `Sendable`.
 
-Since classes are difficult to make `Sendable`, the easiest way to is to replace classes with structs composed of `Sendable` properties:
+Since classes are difficult to make `Sendable`, the easiest way is to replace classes with structs composed of `Sendable` properties:
 
 ```swift
 // This struct is Sendable
@@ -162,17 +162,17 @@ struct Player: Codable, Identifiable {
 extension Player: FetchableRecord, PersistableRecord { }
 ```
 
-You do not need to perform this refactoring right away: you can compile your application in the Swift 5 language mode, with minimal concurrency checkings. Take your time, and only when your application is ready, enable strict concurrency checkings or the Swift 6 language mode.
+You do not need to perform this refactoring right away: you can compile your application in the Swift 5 language mode, with minimal concurrency checking. Take your time, and only when your application is ready, enable strict concurrency checking or the Swift 6 language mode.
 
 #### FAQ: My application defines record classes, because…
 
 - **Question: My record types are subclasses of the built-in GRDB `Record` class.**
     
-    Consider refactoring them as structs. The ``Record`` class was present in GRDB 1.0, in 2017. It has served its purpose. It is not `Sendable`, and its use is actively discouraged since GRDB 7.
+    Consider refactoring them as structs. The ``Record`` class was present in GRDB 1.0, in 2017. It has served its purpose. It is not `Sendable`, and its use has been actively discouraged since GRDB 7.
 
 - **Question: I need a hierarchy of record classes because I use inheritance.**
     
-    It should be possible to refactor the class hiearchy with Swift protocols. See <doc:RecordTimestamps> for a practical example. Protocols make it possible to define records as structs.
+    It should be possible to refactor the class hierarchy with Swift protocols. See <doc:RecordTimestamps> for a practical example. Protocols make it possible to define records as structs.
 
 - **Question: I use the `@Observable` macro for my record types, and this macro requires a class.**
 
@@ -186,7 +186,7 @@ You do not need to perform this refactoring right away: you can compile your app
 
 - **Question: Can I mark my record classes as `@unchecked Sendable`?**
 
-    Take care that all humans and machines who will read your code will think that the class is thread-safe, so make sure it really is. See the following questions.
+    Be aware that all humans and machines who will read your code will think that the class is thread-safe, so make sure it really is. See the following questions.
 
 - **Question: I can use locks to make my class safely Sendable.**
 
@@ -194,7 +194,7 @@ You do not need to perform this refactoring right away: you can compile your app
 
 - **Question: Can I make my record classes immutable?**
 
-    Yes. Classes that can not be modified, made of constant `let` properties, are Sendable. Those immutable classes will not make it easy to modify the database, though.
+    Yes. Classes that cannot be modified, made of constant `let` properties, are Sendable. Those immutable classes will not make it easy to modify the database, though.
 
 ### Choosing between Synchronous and Asynchronous Database Accesses
 
@@ -205,14 +205,14 @@ GRDB connections provide two versions of `read` and `write`, one that is synchro
 try writer.write { ... }
 
 // Asynchronous database access
-await try writer.write { ... }
+try await writer.write { ... }
 ```
 
 Synchronous database accesses are handy. They avoid undesired delays, flashes of missing content in the user interface, or `async` functions. Many apps access the database synchronously, even from the main thread, because SQLite is very fast. Of course, it is still possible to run slow queries: in this case, asynchronous accesses should be preferred. They are guaranteed to never block the main thread.
 
 Performing synchronous accesses from Swift Concurrency tasks is not incorrect.
 
-Some people recommend to avoid performing long blocking jobs on the cooperative thread pool, so you might want to follow this advice, and prefer to always `await` for the database in Swift tasks. In many occasions, the compiler will help you. For example, in the sample code below, the compiler requires the `await` keyword:
+Some people recommend avoiding long blocking jobs on the cooperative thread pool, so you might want to follow this advice, and prefer to always `await` for the database in Swift tasks. On many occasions, the compiler will help you. For example, in the sample code below, the compiler requires the `await` keyword:
 
 ```swift
 func fetchPlayers() async throws -> [Player] {

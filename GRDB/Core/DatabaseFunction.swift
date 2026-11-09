@@ -79,7 +79,7 @@ public final class DatabaseFunction: Identifiable, Sendable {
     ///     - argumentCount: The number of arguments of the function. If
     ///       omitted, or nil, the function accepts any number of arguments.
     ///     - pure: Whether the function is "pure", which means that its results
-    ///       only depends on its inputs. When a function is pure, SQLite has
+    ///       only depend on its inputs. When a function is pure, SQLite has
     ///       the opportunity to perform additional optimizations. Default value
     ///       is false.
     ///     - function: A function that takes an array of ``DatabaseValue``
@@ -105,8 +105,10 @@ public final class DatabaseFunction: Identifiable, Sendable {
                 sqlite3_result_int64(context, int64)
             case .double(let double):
                 sqlite3_result_double(context, double)
-            case .string(let string):
-                sqlite3_result_text(context, string, -1, SQLITE_TRANSIENT)
+            case .string(var string):
+                string.withSQLiteText {
+                    sqlite3_result_text(context, $0, $1, SQLITE_TRANSIENT)
+                }
             case .blob(let data):
                 data.withUnsafeBytes {
                     sqlite3_result_blob(context, $0.baseAddress, CInt($0.count), SQLITE_TRANSIENT)
@@ -165,7 +167,7 @@ public final class DatabaseFunction: Identifiable, Sendable {
     ///     - argumentCount: The number of arguments of the aggregate. If
     ///       omitted, or nil, the aggregate accepts any number of arguments.
     ///     - pure: Whether the aggregate is "pure", which means that its
-    ///       results only depends on its inputs. When an aggregate is pure,
+    ///       results only depend on its inputs. When an aggregate is pure,
     ///       SQLite has the opportunity to perform additional optimizations.
     ///       Default value is false.
     ///     - aggregate: A type that implements the ``DatabaseAggregate``
@@ -213,7 +215,7 @@ public final class DatabaseFunction: Identifiable, Sendable {
     ///     db.add(function: square)
     ///
     ///     // SELECT square(score) FROM player
-    ///     let squaredScores = let Player
+    ///     let squaredScores = try Player
     ///         .select({ square($0.score) }, as: Int.self)
     ///         .fetchAll(db)
     /// }
@@ -447,8 +449,10 @@ public final class DatabaseFunction: Identifiable, Sendable {
             sqlite3_result_int64(sqliteContext, int64)
         case .double(let double):
             sqlite3_result_double(sqliteContext, double)
-        case .string(let string):
-            sqlite3_result_text(sqliteContext, string, -1, SQLITE_TRANSIENT)
+        case .string(var string):
+            string.withSQLiteText {
+                sqlite3_result_text(sqliteContext, $0, $1, SQLITE_TRANSIENT)
+            }
         case .blob(let data):
             data.withUnsafeBytes {
                 sqlite3_result_blob(sqliteContext, $0.baseAddress, CInt($0.count), SQLITE_TRANSIENT)

@@ -21,13 +21,13 @@
 ///
 ///     // SELECT * FROM country ORDER BY code
 ///     //                       ~~~~~~~~~~~~~
-///     // primary key infered from the database schema
+///     // primary key inferred from the database schema
 ///     Country.orderByPrimaryKey()
 ///
 /// ## Children
 ///
 /// Relations have children. A child is a link to another relation, and
-/// provide support for joins and prefetched relations.
+/// provides support for joins and prefetched relations.
 ///
 /// Relations and their children constitute a tree of relations, which the user
 /// builds with associations:
@@ -41,39 +41,39 @@
 ///
 /// - `.oneOptional`:
 ///
-///     Such children are left joined. They may, or not, be included in
+///     Such children are left joined. They may or may not be included in
 ///     the selection.
 ///
 ///         // SELECT book.*
 ///         // FROM book
-///         // LEFT JOIN author ON author.id = book.id
+///         // LEFT JOIN author ON author.id = book.authorId
 ///         Book.joining(optional: Book.author)
 ///
 ///         // SELECT book.*, author.*
 ///         // FROM book
-///         // LEFT JOIN author ON author.id = book.id
+///         // LEFT JOIN author ON author.id = book.authorId
 ///         Book.including(optional: Book.author)
 ///
 /// - `.oneRequired`:
 ///
-///     Such children are inner joined. They may, or not, be included in
+///     Such children are inner joined. They may or may not be included in
 ///     the selection.
 ///
 ///         // SELECT book.*
 ///         // FROM book
-///         // JOIN author ON author.id = book.id AND author.country = 'FR'
+///         // JOIN author ON author.id = book.authorId AND author.country = 'FR'
 ///         Book.joining(required: Book.author.filter(Column("country") == "FR"))
 ///
 ///         // SELECT book.*, author.*
 ///         // FROM book
-///         // JOIN author ON author.id = book.id AND author.country = 'FR'
+///         // JOIN author ON author.id = book.authorId AND author.country = 'FR'
 ///         Book.including(required: Book.author.filter(Column("country") == "FR"))
 ///
 /// - `.all`:
 ///
 ///     Such children are prefetched using an extra SQL request:
 ///
-///         // SELECT * FROM countries;
+///         // SELECT * FROM country;
 ///         // SELECT * FROM passport
 ///         //  WHERE countryCode IN ('BE', 'DE', 'FR', ...);
 ///         Country.including(all: Country.passports)
@@ -85,9 +85,9 @@
 ///     below, the country relation has a `.bridge` child to passports, and the
 ///     passport relation has an `.all` child to citizens.
 ///
-///         // SELECT * FROM countries;
-///         // SELECT citizens.* FROM citizens
-///         // JOIN passport ON passport.citizenId = citizens.id
+///         // SELECT * FROM country;
+///         // SELECT citizen.* FROM citizen
+///         // JOIN passport ON passport.citizenId = citizen.id
 ///         //              AND passport.countryCode IN ('BE', 'DE', 'FR', ...);
 ///         Country.including(all: Country.citizens)
 struct SQLRelation: Sendable {
@@ -184,7 +184,7 @@ struct SQLRelation: Sendable {
 }
 
 extension SQLRelation {
-    /// Convenience factory methods which selects all rows from a table.
+    /// Convenience factory methods which select all rows from a table.
     static func all(
         fromTable tableName: String,
         selection: @escaping @Sendable (Database) -> [SQLSelection] = { _ in [.allColumns] })
@@ -388,7 +388,7 @@ extension SQLRelation {
     ///     // JOIN destination ON destination.id = origin.destinationId
     ///     let request = Origin.including(required: Origin.destination)
     ///
-    /// At low-level, this gives:
+    /// At a low level, this gives:
     ///
     ///     let sqlAssociation = Origin.destination._sqlAssociation
     ///     let origin = Origin.all().query.relation
@@ -399,7 +399,7 @@ extension SQLRelation {
     ///     print(statement.sql)
     ///     // SELECT origin.*, destination.*
     ///     // FROM origin
-    ///     // JOIN destination ON destination.originId = origin.id
+    ///     // JOIN destination ON destination.id = origin.destinationId
     ///
     /// This method works for simple direct associations such as BelongsTo or
     /// HasMany in the above examples, but also for indirect associations such
@@ -439,7 +439,7 @@ extension SQLRelation {
         // We want the child for the "captain" in the following request to be
         // registered under the singular "player" key, and not the plural
         // "players" key, so that it does not conflict with the other child
-        // named "players" (we can not have two distinct children with the
+        // named "players" (we cannot have two distinct children with the
         // same key):
         //
         //     struct Team: TableRecord {
@@ -789,14 +789,14 @@ extension SQLRelation {
 /// Conditions help eager loading of to-many associations:
 ///
 ///     // SELECT * FROM author WHERE ...
-///     // SELECT * FROM book WHERE author.id IN (1, 2, 3)
-///     //                          ~~~~~~~~~~~~~~~~~~~~~~
+///     // SELECT * FROM book WHERE authorId IN (1, 2, 3)
+///     //                          ~~~~~~~~~~~~~~~~~~~~~
 ///     Author.filter(...).including(all: Author.books)
 ///
-/// Conditions help fetching associated records:
+/// Conditions help fetch associated records:
 ///
-///     // SELECT * FROM book WHERE author.id = 1
-///     //                          ~~~~~~~~~~~~~
+///     // SELECT * FROM book WHERE authorId = 1
+///     //                          ~~~~~~~~~~~~
 ///     author.request(for: Author.books)
 enum SQLAssociationCondition: Sendable {
     /// A condition based on a foreign key.
@@ -872,7 +872,7 @@ struct SQLForeignKeyCondition: Equatable {
     ///     SELECT ... FROM book JOIN author ON author.id = book.authorId
     ///                     ~~~~ ~~~~
     ///
-    /// The origin table `book`is on the right of the JOIN operator for
+    /// The origin table `book` is on the right of the JOIN operator for
     /// the `HasMany` and `HasOne` associations:
     ///
     ///     -- Author.including(required: Author.books)
@@ -956,7 +956,7 @@ extension JoinMapping {
         //
         // Since a single NULL value satisfies the foreign key constraint
         // without requiring a matching matching parent row, below we'll ignore
-        // left rows (children) that attempt at matching on NULL.
+        // left rows (children) that attempt to match on NULL.
         if mappings.count == 1 {
             // Join on a single right column.
             // table.a IN (1, 2, 3, ...)
@@ -991,7 +991,7 @@ extension JoinMapping {
         }
     }
     
-    /// Resolves the condition into an SQL expression which involve both left
+    /// Resolves the condition into an SQL expression which involves both left
     /// and right tables.
     ///
     ///     SELECT * FROM left JOIN right ON (right.a = left.b)

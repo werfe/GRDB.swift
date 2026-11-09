@@ -102,7 +102,7 @@ extension Sequence {
 }
 
 /// Makes sure the `finally` function is executed even if `execute` throws, and
-/// rethrows the eventual first thrown error.
+/// rethrows the first thrown error, if any.
 ///
 /// Usage:
 ///
@@ -196,7 +196,7 @@ extension NSLocking {
         return try block()
     }
     
-    // // Verbose version which helps understanding locking bugs
+    // // Verbose version which helps understand locking bugs
     // func synchronized<T>(_ message: @autoclosure () -> String = "", _ block: () throws -> T) rethrows -> T {
     //     let queueName = String(validatingUTF8: __dispatch_queue_get_label(nil))
     //     print("\(queueName ?? "n/d"): \(message()) acquiring \(self)")
@@ -210,8 +210,8 @@ extension NSLocking {
     //     return try block()
     // }
     
-    /// Performs the side effect outside of the synchronized block. This allows
-    /// avoiding deadlocks, when the side effect feedbacks.
+    /// Performs the side effect outside of the synchronized block. This avoids
+    /// deadlocks, when the side effect triggers a reentrant call.
     func synchronized(
         _ message: @autoclosure () -> String = #function,
         _ block: (inout (() -> Void)?) -> Void)

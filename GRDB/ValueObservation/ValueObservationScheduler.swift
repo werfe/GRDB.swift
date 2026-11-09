@@ -58,7 +58,7 @@ extension ValueObservationMainActorScheduler {
 
 // MARK: - AsyncValueObservationScheduler
 
-/// A scheduler that asynchronously notifies fresh value of a `DispatchQueue`.
+/// A scheduler that asynchronously notifies fresh values on a `DispatchQueue`.
 public struct AsyncValueObservationScheduler: ValueObservationScheduler {
     var queue: DispatchQueue
     
@@ -74,7 +74,7 @@ public struct AsyncValueObservationScheduler: ValueObservationScheduler {
 }
 
 extension ValueObservationScheduler where Self == AsyncValueObservationScheduler {
-    /// A scheduler that asynchronously notifies fresh value of the
+    /// A scheduler that asynchronously notifies fresh values on the
     /// given `DispatchQueue`.
     ///
     /// For example:
@@ -84,7 +84,7 @@ extension ValueObservationScheduler where Self == AsyncValueObservationScheduler
     ///     try Player.fetchAll(db)
     /// }
     ///
-    /// let cancellable = try observation.start(
+    /// let cancellable = observation.start(
     ///     in: dbQueue,
     ///     scheduling: .async(onQueue: .main),
     ///     onError: { error in ... },
@@ -94,7 +94,7 @@ extension ValueObservationScheduler where Self == AsyncValueObservationScheduler
     /// ```
     ///
     /// - warning: Make sure you provide a serial queue, because a
-    ///   concurrent one such as `DispachQueue.global(qos: .default)` would
+    ///   concurrent one such as `DispatchQueue.global(qos: .default)` would
     ///   mess with the ordering of fresh value notifications.
     public static func async(onQueue queue: DispatchQueue) -> AsyncValueObservationScheduler {
         AsyncValueObservationScheduler(queue: queue)
@@ -133,7 +133,7 @@ extension ValueObservationScheduler where Self == ImmediateValueObservationSched
     ///     try Player.fetchAll(db)
     /// }
     ///
-    /// let cancellable = try observation.start(
+    /// let cancellable = observation.start(
     ///     in: dbQueue,
     ///     scheduling: .immediate,
     ///     onError: { error in ... },
@@ -162,7 +162,7 @@ extension ValueObservationMainActorScheduler where Self == ImmediateValueObserva
     ///     try Player.fetchAll(db)
     /// }
     ///
-    /// let cancellable = try observation.start(
+    /// let cancellable = observation.start(
     ///     in: dbQueue,
     ///     scheduling: .immediate,
     ///     onError: { error in ... },

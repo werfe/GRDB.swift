@@ -16,7 +16,7 @@ import Foundation
 ///
 /// To get `DatabaseValue` instances, you can:
 ///
-/// - Fetch `DatabaseValue` from a ``Database`` instace:
+/// - Fetch `DatabaseValue` from a ``Database`` instance:
 ///
 ///     ```swift
 ///     try dbQueue.read { db in
@@ -121,7 +121,7 @@ public struct DatabaseValue: Hashable {
     
     // MARK: - Extracting Value
     
-    /// A boolean value indicating is the database value is `NULL`.
+    /// A boolean value indicating if the database value is `NULL`.
     public var isNull: Bool {
         switch storage {
         case .null:
@@ -147,7 +147,10 @@ public struct DatabaseValue: Hashable {
         case SQLITE_FLOAT:
             storage = .double(sqlite3_value_double(sqliteValue))
         case SQLITE_TEXT:
-            storage = .string(String(cString: sqlite3_value_text(sqliteValue)!))
+            let text = sqlite3_value_text(sqliteValue)
+            let byteCount = Int(sqlite3_value_bytes(sqliteValue))
+            let string = String(decoding: UnsafeBufferPointer(start: text, count: byteCount), as: UTF8.self)
+            storage = .string(string)
         case SQLITE_BLOB:
             if let bytes = sqlite3_value_blob(sqliteValue) {
                 let count = Int(sqlite3_value_bytes(sqliteValue))
@@ -171,7 +174,8 @@ public struct DatabaseValue: Hashable {
         case SQLITE_FLOAT:
             storage = .double(sqlite3_column_double(sqliteStatement, index))
         case SQLITE_TEXT:
-            storage = .string(String(cString: sqlite3_column_text(sqliteStatement, index)))
+            let string = String(sqliteStatement: sqliteStatement, index: index)
+            storage = .string(string)
         case SQLITE_BLOB:
             if let bytes = sqlite3_column_blob(sqliteStatement, index) {
                 let count = Int(sqlite3_column_bytes(sqliteStatement, index))
@@ -223,7 +227,7 @@ extension DatabaseValue: StatementBinding {
             let code = double.bind(to: sqliteStatement, at: index)
             try checkBindingSuccess(code: code, sqliteStatement: sqliteStatement)
             return try body()
-        case .string(let string):
+        case .string(var string):
             return try string.withBinding(to: sqliteStatement, at: index, do: body)
         case .blob(let data):
             return try data.withBinding(to: sqliteStatement, at: index, do: body)
@@ -257,7 +261,7 @@ extension DatabaseValue.Storage: Equatable {
 }
 
 extension DatabaseValue: Equatable {
-    /// Returns whether two ``DatabaseValue`` are equal.
+    /// Returns whether two ``DatabaseValue`` instances are equal.
     ///
     /// For example:
     ///
@@ -266,7 +270,7 @@ extension DatabaseValue: Equatable {
     /// 1.databaseValue == 1.databaseValue     // true
     /// ```
     ///
-    /// When comparing integers and doubles, the result is true if and only
+    /// When comparing integers and doubles, the result is true if and only if
     /// values are equal, and if converting one type to the other does
     /// not lose information:
     ///
@@ -274,7 +278,7 @@ extension DatabaseValue: Equatable {
     /// 1.databaseValue == 1.0.databaseValue   // true
     /// ```
     ///
-    /// For a comparison that distinguishes integer and doubles, compare
+    /// For a comparison that distinguishes integers and doubles, compare
     /// storages instead:
     ///
     /// ```swift
@@ -362,7 +366,7 @@ extension DatabaseValue: CustomStringConvertible {
 /// This comparison is not public because it does not handle text collations,
 /// and may be dangerous when put in user hands.
 ///
-/// So far, the only goal of this sorting method so far is aesthetic, and
+/// So far, the only goal of this sorting method is aesthetic, and
 /// easier testing.
 func < (lhs: DatabaseValue, rhs: DatabaseValue) -> Bool {
     switch (lhs.storage, rhs.storage) {

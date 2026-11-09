@@ -28,8 +28,8 @@ This article explains how to solve those errors:
 
 > important: GRDB is impacted by some SQLite limitations regarding INSTEAD OF triggers:
 >
-> - **Auto-incremented primary keys are not supported.** To be precise, SQLite won't expose the rowid of rows inserted via an INSTEAD OF trigger, so GRDB won't know the id of newly inserted rows. This has various nefarious consequences—see for example the important notice in the ``MutablePersistableRecord/didInsert(_:)`` callback. For more information, check this [SQLite forum thread](https://sqlite.org/forum/forumpost/707e7ed932).
-> - **INSTEAD OF triggers and the RETURNING clause do not play well together.** Those are SQLite bugs. All GRDB record methods with `andFetch` in their name may return unexpected or wrong results, depending on the SQLite version. For example, the SQLite version that ships with iOS 18 has bugs, and even more in iOS 17. If you intend to use the `RETURNING` clause, it is recommended that you write tests and run them in various target operation systems.
+> - **Auto-incremented primary keys are not supported.** To be precise, SQLite won't expose the rowid of rows inserted via an INSTEAD OF trigger, so GRDB won't know the id of newly inserted rows. This has various harmful consequences—see for example the important notice in the ``MutablePersistableRecord/didInsert(_:)`` callback. For more information, check this [SQLite forum thread](https://sqlite.org/forum/forumpost/707e7ed932).
+> - **INSTEAD OF triggers and the RETURNING clause do not play well together.** Those are SQLite bugs. All GRDB record methods with `andFetch` in their name may return unexpected or wrong results, depending on the SQLite version. For example, the SQLite version that ships with iOS 18 has bugs, and even more in iOS 17. If you intend to use the `RETURNING` clause, it is recommended that you write tests and run them in various target operating systems.
 
 ## Preliminary Setup
 
@@ -117,9 +117,9 @@ try dbQueue.write { db in
 
 ## Specifying the primary key of a view
 
-SQLite views do not have any primary key, so GRDB cannot introspect the database schema and automatically find the eventual primary key.
+SQLite views do not have any primary key, so GRDB cannot introspect the database schema and automatically find the primary key, if any.
 
-To instruct GRDB about the primary key, define a **schema source**, a type that conforms to ``DatabaseSchemaSource``. In this sample code, the schema only contains the "captain" view, so our schema source does not need to be very complicated. Check the documentation of the protocol for more detailed instructions:
+To tell GRDB about the primary key, define a **schema source**, a type that conforms to ``DatabaseSchemaSource``. In this sample code, the schema only contains the "captain" view, so our schema source does not need to be very complicated. Check the documentation of the protocol for more detailed instructions:
 
 ```swift
 struct GameSchemaSource: DatabaseSchemaSource {
@@ -236,7 +236,7 @@ extension Captain: Encodable, PersistableRecord { }
 ✅ We can directly insert captains:
 
 ```swift
-try dbQueue.write {
+try dbQueue.write { db in
     try Team(id: "green", name: "Green").insert(db)
     // Diane is the captain
     try Captain(id: "diane", name: "Diane", teamId: "green").insert(db)
@@ -282,7 +282,7 @@ try migrator.migrate(dbQueue)
 ✅ Let's update captains:
 
 ```swift
-try dbQueue.write {
+try dbQueue.write { db in
     try Team(id: "red", name: "Red").insert(db)
     try Team(id: "blue", name: "Blue").insert(db)
     try Captain(id: "alice", name: "Alice", teamId: "red").insert(db)
@@ -329,7 +329,7 @@ try migrator.migrate(dbQueue)
 ✅ Let's delete some captains:
 
 ```swift
-try dbQueue.write {
+try dbQueue.write { db in
     // Delete Alice
     try Captain.deleteOne(db, id: "alice")
     
@@ -338,7 +338,7 @@ try dbQueue.write {
     try bob.delete(db)
     
     // Delete all captains
-    try Captain.deleteAll()
+    try Captain.deleteAll(db)
 }
 ```
 

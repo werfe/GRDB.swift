@@ -1,11 +1,11 @@
 import Dispatch
 
-/// A database connection that serializes accesses to an unchanging
+/// A database connection that serializes accesses to unchanging
 /// database content, as it existed at the moment the snapshot was created.
 ///
 /// ## Overview
 ///
-/// A `DatabaseSnapshot` never sees any database modification during all its
+/// A `DatabaseSnapshot` never sees any database modification during its whole
 /// lifetime. All database accesses performed from a snapshot always see the
 /// same identical database content.
 ///
@@ -39,7 +39,7 @@ import Dispatch
 /// snapshot from within a write access, outside of any transaction.
 ///
 /// For example, compare the two snapshots below. The first one is guaranteed to
-/// see an empty table of players, because is is created after all players have
+/// see an empty table of players, because it is created after all players have
 /// been deleted, and from the serialized writer dispatch queue which prevents
 /// any concurrent write. The second is created without this concurrency
 /// protection, which means that some other threads may already have created
@@ -48,7 +48,7 @@ import Dispatch
 /// ```swift
 /// let snapshot1 = try dbPool.writeWithoutTransaction { db -> DatabaseSnapshot in
 ///     try db.inTransaction {
-///         try Player.deleteAll()
+///         try Player.deleteAll(db)
 ///         return .commit
 ///     }
 ///
@@ -70,7 +70,7 @@ import Dispatch
 /// ```
 ///
 /// `DatabaseSnapshot` inherits its database access methods from the
-/// ``DatabaseReader`` protocols.
+/// ``DatabaseReader`` protocol.
 ///
 /// `DatabaseSnapshot` serializes database accesses and can't perform concurrent
 /// reads. For concurrent reads, see ``DatabaseSnapshotPool``.

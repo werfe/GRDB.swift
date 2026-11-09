@@ -33,27 +33,27 @@ You need a path to a database file in order to open a database connection.
 
 // Get the path to the database resource.
 // Replace `Bundle.main` with `Bundle.module` when you write a Swift Package.
-if let dbPath = Bundle.main.path(forResource: "db", ofType: "sqlite")
+let dbPath = Bundle.main.path(forResource: "db", ofType: "sqlite")
 
 if let dbPath {
     // If the resource exists, open a read-only connection.
-    // Writes are disallowed because resources can not be modified. 
+    // Writes are disallowed because resources cannot be modified. 
     var config = Configuration()
     config.readonly = true
     let dbQueue = try DatabaseQueue(path: dbPath, configuration: config)
 } else {
-    // The database resource can not be found.
+    // The database resource cannot be found.
     // Fix your setup, or report the problem to the user. 
 }
 ```
 
-**If the application creates or writes in the database**, then first choose a proper location for the database file. Document-based applications will let the user pick a location. Apps that use the database as a global storage will prefer the Application Support directory.
+**If the application creates or writes in the database**, then first choose a proper location for the database file. Document-based applications will let the user pick a location. Apps that use the database as global storage will prefer the Application Support directory.
 
 > Tip: Regardless of the database location, it is recommended that you wrap the database file inside a dedicated directory. This directory will bundle the main database file and its related [SQLite temporary files](https://www.sqlite.org/tempfiles.html) together.
 >
-> The dedicated directory helps moving or deleting the whole database when needed: just move or delete the directory.
+> The dedicated directory helps move or delete the whole database when needed: just move or delete the directory.
 >
-> On iOS, the directory can be encrypted with [data protection](https://developer.apple.com/documentation/uikit/protecting_the_user_s_privacy/encrypting_your_app_s_files), in order to help securing all database files in one shot. When a database is protected, an application that runs in the background on a locked device won't be able to read or write from it. Instead, it will catch ``DatabaseError`` with code [`SQLITE_IOERR`](https://www.sqlite.org/rescode.html#ioerr) (10) "disk I/O error", or [`SQLITE_AUTH`](https://www.sqlite.org/rescode.html#auth) (23) "not authorized".
+> On iOS, the directory can be encrypted with [data protection](https://developer.apple.com/documentation/uikit/protecting_the_user_s_privacy/encrypting_your_app_s_files), in order to help secure all database files in one shot. When a database is protected, an application that runs in the background on a locked device won't be able to read or write from it. Instead, it will catch ``DatabaseError`` with code [`SQLITE_IOERR`](https://www.sqlite.org/rescode.html#ioerr) (10) "disk I/O error", or [`SQLITE_AUTH`](https://www.sqlite.org/rescode.html#auth) (23) "not authorized".
 
 The sample code below creates or opens a database file inside its dedicated directory. On the first run, a new empty database file is created. On subsequent runs, the directory and database file already exist, so it just opens a connection:
 

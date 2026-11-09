@@ -11,21 +11,21 @@ import SQLCipher
 import GRDBSQLite
 #endif
 
-/// A database connection that allows concurrent accesses to an unchanging
+/// A database connection that allows concurrent accesses to unchanging
 /// database content, as it existed at the moment the snapshot was created.
 ///
 /// ## Overview
 ///
 /// - note: [**🔥 EXPERIMENTAL**](https://github.com/groue/GRDB.swift/blob/master/README.md#what-are-experimental-features)
 ///
-/// A `DatabaseSnapshotPool` never sees any database modification during all its
+/// A `DatabaseSnapshotPool` never sees any database modification during its whole
 /// lifetime. All database accesses performed from a snapshot always see the
 /// same identical database content.
 ///
 /// It creates a pool of up to ``Configuration/maximumReaderCount`` read-only
 /// SQLite connections. All read accesses are executed in **reader dispatch
 /// queues** (one per read-only SQLite connection). SQLite connections are
-/// closed when the `DatabasePool` is deallocated.
+/// closed when the `DatabaseSnapshotPool` is deallocated.
 ///
 /// An SQLite database in the [WAL mode](https://www.sqlite.org/wal.html) is
 /// required for creating a `DatabaseSnapshotPool`.
@@ -57,7 +57,7 @@ import GRDBSQLite
 /// }
 ///
 /// // Start observing the 'player' table
-/// let cancellable = try observation.start(in: dbPool) { error in
+/// let cancellable = observation.start(in: dbPool) { error in
 ///     // Handle error
 /// } onChange: { (snapshot: DatabaseSnapshotPool) in
 ///     // Handle a fresh snapshot
@@ -65,7 +65,7 @@ import GRDBSQLite
 /// ```
 ///
 /// `DatabaseSnapshotPool` inherits its database access methods from the
-/// ``DatabaseReader`` protocols.
+/// ``DatabaseReader`` protocol.
 ///
 /// Related SQLite documentation:
 ///
@@ -105,12 +105,12 @@ public final class DatabaseSnapshotPool {
     /// let dbPool = try DatabasePool(path: "/path/to/database.sqlite")
     /// let snapshot = try dbPool.writeWithoutTransaction { db -> DatabaseSnapshotPool in
     ///     try db.inTransaction {
-    ///         try Player.deleteAll()
+    ///         try Player.deleteAll(db)
     ///         return .commit
     ///     }
     ///
     ///     // Create the snapshot after all players have been deleted.
-    ///     return DatabaseSnapshotPool(db)
+    ///     return try DatabaseSnapshotPool(db)
     /// }
     ///
     /// // Later... Maybe some players have been created.

@@ -46,7 +46,7 @@ import Foundation
 ///
 /// - ``hasSchemaChanges(_:)``
 public struct DatabaseMigrator: Sendable {
-    /// Controls how a migration handle foreign keys constraints.
+    /// Controls how a migration handles foreign key constraints.
     public enum ForeignKeyChecks: Sendable {
         /// The migration runs with disabled foreign keys.
         ///
@@ -153,7 +153,7 @@ public struct DatabaseMigrator: Sendable {
     /// - warning: Before using this unsafe method, try to register your
     ///   migrations with the `foreignKeyChecks: .immediate` option, _if
     ///   possible_, as in the example above. This will enhance migration
-    ///   performances, while preserving the database integrity guarantee.
+    ///   performance, while preserving the database integrity guarantee.
     public func disablingDeferredForeignKeyChecks() -> DatabaseMigrator {
         with { $0.defersForeignKeyChecks = false }
     }
@@ -178,7 +178,7 @@ public struct DatabaseMigrator: Sendable {
     /// ```
     ///
     /// Database operations are wrapped in a transaction. If they throw an
-    /// error, the transaction is rollbacked, migrations are aborted, and the
+    /// error, the transaction is rolled back, migrations are aborted, and the
     /// error is thrown by the migrating method.
     ///
     /// By default, database operations run with disabled foreign keys, and
@@ -208,7 +208,7 @@ public struct DatabaseMigrator: Sendable {
     ///       does not perform schema changes described in
     ///       <https://www.sqlite.org/lang_altertable.html#making_other_kinds_of_table_schema_changes>
     ///     - migrate: A closure that performs database operations.
-    /// - precondition: No migration with the same identifier as already
+    /// - precondition: No migration with the same identifier has already
     ///   been registered.
     public mutating func registerMigration(
         _ identifier: String,
@@ -262,12 +262,12 @@ public struct DatabaseMigrator: Sendable {
     /// }
     /// ```
     ///
-    /// In the above sample code, the merged migration is named like the
+    /// In the above sample code, the merged migration is named after the
     /// last one of the merged set. You can also give it a brand new name,
     /// as in the alternative below. Notice the different logic in the
     /// migration code.
     ///
-    /// **In all cases avoid naming the merged migration like the first
+    /// **In all cases avoid naming the merged migration after the first
     /// elements in the merged set** (`v1` or `v2` in our example).
     ///
     /// ```swift
@@ -308,7 +308,7 @@ public struct DatabaseMigrator: Sendable {
     ///       first argument is a database connection. The second argument
     ///       is the set of previous migrations that has been applied when
     ///       the merged migration runs.
-    /// - precondition: No migration with the same identifier as already
+    /// - precondition: No migration with the same identifier has already
     ///   been registered.
     public mutating func registerMigration(
         _ identifier: String,
@@ -416,7 +416,7 @@ public struct DatabaseMigrator: Sendable {
     /// ```swift
     /// #if DEBUG
     /// // Speed up development by nuking the database when migrations change
-    /// if dbQueue.read(migrator.hasSchemaChanges) {
+    /// if try dbQueue.read(migrator.hasSchemaChanges) {
     ///     try dbQueue.erase()
     ///     // Perform other needed logic
     /// }
@@ -672,7 +672,7 @@ extension DatabaseMigrator {
     /// The database is not accessed until subscription. Value and completion
     /// are published on `scheduler` (the main dispatch queue by default).
     ///
-    /// - parameter writer: A DatabaseWriter.
+    /// - parameter writer: A DatabaseWriter
     ///   where migrations should apply.
     /// - parameter scheduler: A Combine Scheduler.
     public func migratePublisher(

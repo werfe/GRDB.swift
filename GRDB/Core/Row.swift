@@ -41,7 +41,7 @@ import Foundation
 ///
 /// - ``copy()``
 ///
-/// ### Row Informations
+/// ### Row Information
 ///
 /// - ``columnNames``
 /// - ``containsNonNullValue``
@@ -154,7 +154,20 @@ public final class Row {
     let sqliteStatement: SQLiteStatement?
     
     /// The number of columns in the row.
-    public let count: Int
+    @inlinable
+    public var count: Int {
+        // Rows that map an SQLite statement don't cache the number of
+        // columns, because SQLite may recompile the statement after a
+        // schema change, with a different number of columns.
+        if let sqliteStatement {
+            return Int(sqlite3_column_count(sqliteStatement))
+        }
+        return cachedCount
+    }
+    
+    /// The number of columns, when the row does not map an SQLite statement.
+    @usableFromInline
+    let cachedCount: Int
     
     /// A view on the prefetched associated rows.
     ///
@@ -238,7 +251,7 @@ public final class Row {
         self.statement = statement
         self.sqliteStatement = statement.sqliteStatement
         self.impl = StatementRowImpl(sqliteStatement: statement.sqliteStatement, statement: statement)
-        self.count = Int(sqlite3_column_count(sqliteStatement))
+        self.cachedCount = 0 // Unused because sqliteStatement is not nil: see `count`
     }
     
     /// Creates a row that maps an SQLite statement. Further calls to
@@ -247,10 +260,10 @@ public final class Row {
         self.statement = nil
         self.sqliteStatement = sqliteStatement
         self.impl = SQLiteStatementRowImpl(sqliteStatement: sqliteStatement)
-        self.count = Int(sqlite3_column_count(sqliteStatement))
+        self.cachedCount = 0 // Unused because sqliteStatement is not nil: see `count`
     }
     
-    /// Creates a row that contain a copy of the current state of the
+    /// Creates a row that contains a copy of the current state of the
     /// SQLite statement. Further calls to sqlite3_step() do not modify the row.
     ///
     /// The row is implemented on top of StatementCopyRowImpl, which *copies*
@@ -269,7 +282,7 @@ public final class Row {
         self.statement = nil
         self.sqliteStatement = nil
         self.impl = impl
-        self.count = impl.count
+        self.cachedCount = impl.count
     }
 }
 
@@ -314,7 +327,7 @@ extension Row {
         GRDBPrecondition(index >= 0 && index < count, "row index out of range", file: file, line: line)
     }
     
-    /// Returns a boolean value indicating if the row contains one value this
+    /// Returns a boolean value indicating if the row contains one value that
     /// is not `NULL`.
     ///
     /// For example:
@@ -614,7 +627,7 @@ extension Row {
     /// the same name, the leftmost column is considered.
     ///
     /// If the row does not contain any column with that name, or if the SQLite
-    /// value is `NULL`, the data is nil. If the SQLite value can not be
+    /// value is `NULL`, the data is nil. If the SQLite value cannot be
     /// converted to `Data`, an error is thrown.
     ///
     /// - warning: The `Data` argument to the body must not be stored or used
@@ -632,7 +645,7 @@ extension Row {
     /// the same name, the leftmost column is considered.
     ///
     /// If the row does not contain any column with that name, or if the SQLite
-    /// value is `NULL`, the data is nil. If the SQLite value can not be
+    /// value is `NULL`, the data is nil. If the SQLite value cannot be
     /// converted to `Data`, an error is thrown.
     ///
     /// - warning: The `Data` argument to the body must not be stored or used
@@ -649,7 +662,7 @@ extension Row {
     /// If the SQLite value is NULL, the result is nil. If the SQLite value can
     /// not be converted to Data, a fatal error is raised.
     ///
-    /// The returned data does not owns its bytes: it must not be used longer
+    /// The returned data does not own its bytes: it must not be used longer
     /// than the row's lifetime.
     @available(*, deprecated, message: "Use withUnsafeData(atIndex:_:) instead.")
     public func dataNoCopy(atIndex index: Int) -> Data? {
@@ -662,10 +675,10 @@ extension Row {
     /// the same name, the leftmost column is considered.
     ///
     /// If the column is missing or if the SQLite value is NULL, the result is
-    /// nil. If the SQLite value can not be converted to Data, a fatal error
+    /// nil. If the SQLite value cannot be converted to Data, a fatal error
     /// is raised.
     ///
-    /// The returned data does not owns its bytes: it must not be used longer
+    /// The returned data does not own its bytes: it must not be used longer
     /// than the row's lifetime.
     @available(*, deprecated, message: "Use withUnsafeData(named:_:) instead.")
     public func dataNoCopy(named columnName: String) -> Data? {
@@ -681,10 +694,10 @@ extension Row {
     /// the same name, the leftmost column is considered.
     ///
     /// If the column is missing or if the SQLite value is NULL, the result is
-    /// nil. If the SQLite value can not be converted to Data, a fatal error
+    /// nil. If the SQLite value cannot be converted to Data, a fatal error
     /// is raised.
     ///
-    /// The returned data does not owns its bytes: it must not be used longer
+    /// The returned data does not own its bytes: it must not be used longer
     /// than the row's lifetime.
     @available(*, deprecated, message: "Use withUnsafeData(at:_:) instead.")
     public func dataNoCopy(_ column: some ColumnExpression) -> Data? {
@@ -756,7 +769,7 @@ extension Row {
     
     // MARK: - Extracting Records
     
-    /// Returns the record associated to the given key.
+    /// Returns the record associated with the given key.
     ///
     /// The key is a row scope that was either defined manually, with
     /// ``ScopeAdapter``, or with the ``JoinableRequest/including(required:)``
@@ -802,7 +815,7 @@ extension Row {
         try! decode(Record.self, forKey: scope)
     }
     
-    /// Returns the eventual record associated to the given key.
+    /// Returns the record associated with the given key, if any.
     ///
     /// The key is a row scope that was either defined manually, with
     /// ``ScopeAdapter``, or with the ``JoinableRequest/including(required:)``
@@ -829,7 +842,7 @@ extension Row {
     ///
     /// struct Country: TableRecord, FetchableRecord { }
     ///
-    /// // Fetch a book, with its eventual author, and the country of its author.
+    /// // Fetch a book, with its optional author, and the country of its author.
     /// let request = Book
     ///     .including(optional: Book.author
     ///         .including(optional: Author.country))
@@ -848,7 +861,7 @@ extension Row {
         try! decodeIfPresent(Record.self, forKey: scope)
     }
     
-    /// Returns a collection of prefetched records associated to the given
+    /// Returns a collection of prefetched records associated with the given
     /// association key.
     ///
     /// Prefetched rows are defined by the ``JoinableRequest/including(all:)``
@@ -882,7 +895,7 @@ extension Row {
         try! decode(Records.self, forKey: key)
     }
     
-    /// Returns the set of prefetched records associated to the given
+    /// Returns the set of prefetched records associated with the given
     /// association key.
     ///
     /// Prefetched rows are defined by the ``JoinableRequest/including(all:)``
@@ -918,7 +931,7 @@ extension Row {
     
     /// A view on the scopes defined by row adapters.
     ///
-    /// The returned object provides an access to all available scopes in
+    /// The returned object provides access to all available scopes in
     /// the row.
     ///
     /// Row scopes can be defined manually, with ``ScopeAdapter``.
@@ -965,7 +978,7 @@ extension Row {
     
     /// A view on the scopes tree defined by row adapters.
     ///
-    /// The returned object provides an access to all available scopes in
+    /// The returned object provides access to all available scopes in
     /// the row, recursively. For any given scope identifier, a breadth-first
     /// search is performed.
     ///
@@ -1008,7 +1021,7 @@ extension Row {
         ScopesTreeView(scopes: scopes)
     }
     
-    /// The row, without any scope of prefetched rows.
+    /// The row, without any scope or prefetched rows.
     ///
     /// This property is useful when testing the content of rows fetched from
     /// joined requests.
@@ -1380,7 +1393,7 @@ extension Row {
 // MARK: - Throwing Record Decoding Methods
 
 extension Row {
-    /// Returns the eventual record associated to the given key.
+    /// Returns the record associated with the given key, if any.
     ///
     /// The key is a row scope that was either defined manually, with
     /// ``ScopeAdapter``, or with the ``JoinableRequest/including(required:)``
@@ -1407,7 +1420,7 @@ extension Row {
     ///
     /// struct Country: TableRecord, FetchableRecord { }
     ///
-    /// // Fetch a book, with its eventual author, and the country of its author.
+    /// // Fetch a book, with its optional author, and the country of its author.
     /// let request = Book
     ///     .including(optional: Book.author
     ///         .including(optional: Author.country))
@@ -1435,7 +1448,7 @@ extension Row {
         return try Record(row: scopedRow)
     }
     
-    /// Returns the record associated to the given key.
+    /// Returns the record associated with the given key.
     ///
     /// The key is a row scope that was either defined manually, with
     /// ``ScopeAdapter``, or with the ``JoinableRequest/including(required:)``
@@ -1518,7 +1531,7 @@ extension Row {
 // MARK: - Throwing Record RangeReplaceableCollection and Set Methods
 
 extension Row {
-    /// Returns a collection of prefetched records associated to the given
+    /// Returns a collection of prefetched records associated with the given
     /// association key.
     ///
     /// Prefetched rows are defined by the ``JoinableRequest/including(all:)``
@@ -1584,7 +1597,7 @@ extension Row {
         return collection
     }
     
-    /// Returns the set of prefetched records associated to the given
+    /// Returns the set of prefetched records associated with the given
     /// association key.
     ///
     /// Prefetched rows are defined by the ``JoinableRequest/including(all:)``
@@ -2382,7 +2395,7 @@ extension Row: CustomDebugStringConvertible {
 
 extension Row: ExpressibleByDictionaryLiteral {
     /// Creates a row initialized with elements. Column order is preserved, and
-    /// duplicated columns names are allowed.
+    /// duplicated column names are allowed.
     ///
     ///     let row: Row = ["foo": 1, "foo": "bar", "baz": nil]
     ///     print(row)
@@ -2554,7 +2567,7 @@ extension Row {
         // (we preserve the ordering of associations in the request)
         fileprivate var prefetches: OrderedDictionary<String, Prefetch> = [:]
         
-        /// A boolean value indicating if there is no prefetched
+        /// A boolean value indicating if there are no prefetched
         /// associated rows.
         public var isEmpty: Bool {
             prefetches.isEmpty
@@ -2712,7 +2725,7 @@ extension RowImpl {
 }
 
 // TODO: merge with StatementCopyRowImpl eventually?
-/// See Row.init(dictionary:)
+/// See Row.init(_:)
 struct ArrayRowImpl: RowImpl {
     let columns: [(String, DatabaseValue)]
     
@@ -2745,7 +2758,7 @@ struct ArrayRowImpl: RowImpl {
 extension ArrayRowImpl: Sendable { }
 
 // TODO: merge with ArrayRowImpl eventually?
-/// See Row.init(copiedFromStatementRef:sqliteStatement:)
+/// See Row.init(copiedFromSQLiteStatement:statement:)
 private struct StatementCopyRowImpl: RowImpl {
     let dbValues: ContiguousArray<DatabaseValue>
     let columnNames: [String]
@@ -2785,19 +2798,10 @@ private struct StatementCopyRowImpl: RowImpl {
 private struct StatementRowImpl: RowImpl {
     let statement: Statement
     let sqliteStatement: SQLiteStatement
-    let lowercaseColumnIndexes: [String: Int]
     
     init(sqliteStatement: SQLiteStatement, statement: Statement) {
         self.statement = statement
         self.sqliteStatement = sqliteStatement
-        // Optimize row[columnName]
-        let lowercaseColumnNames = (0..<sqlite3_column_count(sqliteStatement))
-            .map { String(cString: sqlite3_column_name(sqliteStatement, CInt($0))).lowercased() }
-        self.lowercaseColumnIndexes = Dictionary(
-            lowercaseColumnNames
-                .enumerated()
-                .map { ($0.element, $0.offset) },
-            uniquingKeysWith: { (left, _) in left }) // keep leftmost indexes
     }
     
     var count: Int {
@@ -2844,6 +2848,7 @@ private struct StatementRowImpl: RowImpl {
     }
     
     func index(forColumn name: String) -> Int? {
+        let lowercaseColumnIndexes = statement.columnIndexes
         if let index = lowercaseColumnIndexes[name] {
             return index
         }

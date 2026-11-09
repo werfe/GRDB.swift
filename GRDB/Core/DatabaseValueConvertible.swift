@@ -64,13 +64,13 @@ public protocol DatabaseValueConvertible: SQLExpressible, StatementBinding {
     
     /// Returns the `JSONDecoder` that decodes the value.
     ///
-    /// This method is dedicated to ``DatabaseValueConvertible`` types that 
+    /// This method is intended for ``DatabaseValueConvertible`` types that 
     /// also conform to the standard `Decodable` protocol.
     static func databaseJSONDecoder() -> JSONDecoder
     
     /// Returns the `JSONEncoder` that encodes the value.
     ///
-    /// This method is dedicated to ``DatabaseValueConvertible`` types that
+    /// This method is intended for ``DatabaseValueConvertible`` types that
     /// also conform to the standard `Encodable` protocol.
     static func databaseJSONEncoder() -> JSONEncoder
 }
@@ -184,7 +184,7 @@ extension DatabaseValueConvertible {
 ///     let names: DatabaseValueCursor<String> = try String.fetchCursor(db, sql: """
 ///         SELECT name FROM player
 ///         """)
-///     while let name = names.next() { // String
+///     while let name = try names.next() { // String
 ///         print(name)
 ///     }
 /// }
@@ -227,7 +227,7 @@ public final class DatabaseValueCursor<Value: DatabaseValueConvertible>: Databas
 @available(*, unavailable)
 extension DatabaseValueCursor: Sendable { }
 
-/// DatabaseValueConvertible comes with built-in methods that allow to fetch
+/// DatabaseValueConvertible comes with built-in methods that allow you to fetch
 /// cursors, arrays, or single values:
 ///
 ///     try String.fetchCursor(db, sql: "SELECT name FROM ...", arguments:...) // Cursor of String
@@ -237,7 +237,7 @@ extension DatabaseValueCursor: Sendable { }
 ///     let statement = try db.makeStatement(sql: "SELECT name FROM ...")
 ///     try String.fetchCursor(statement, arguments:...) // Cursor of String
 ///     try String.fetchAll(statement, arguments:...)    // [String]
-///     try String.fetchOne(statement, arguments:...)    // String
+///     try String.fetchOne(statement, arguments:...)    // String?
 ///
 /// DatabaseValueConvertible is adopted by Bool, Int, String, etc.
 extension DatabaseValueConvertible {

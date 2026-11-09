@@ -48,7 +48,7 @@ public protocol FTS5WrapperTokenizer: FTS5CustomTokenizer {
     /// The wrapped tokenizer
     var wrappedTokenizer: any FTS5Tokenizer { get }
     
-    /// Given a token produced by the wrapped tokenizer, notifies customized
+    /// Given a token produced by the wrapped tokenizer, passes customized
     /// tokens to the `tokenCallback` function.
     ///
     /// For example:
@@ -65,7 +65,7 @@ public protocol FTS5WrapperTokenizer: FTS5CustomTokenizer {
     /// }
     /// ```
     ///
-    /// When implementing the accept method, there are a two rules
+    /// When implementing the accept method, there are two rules
     /// to observe:
     ///
     /// 1. Errors thrown by the tokenCallback function must not be caught.

@@ -74,12 +74,12 @@ public protocol DatabaseReader: AnyObject, Sendable {
     /// every future database access will throw a ``DatabaseError`` of
     /// code `SQLITE_MISUSE`.
     ///
-    /// Otherwise, there exists concurrent database accesses or living prepared
+    /// Otherwise, there exist concurrent database accesses or living prepared
     /// statements that prevent the database from closing, and this method
     /// throws a ``DatabaseError`` of code `SQLITE_BUSY`.
     /// See <https://www.sqlite.org/c3ref/close.html> for more information.
     ///
-    /// After an error has been thrown, the database may still be opened, and
+    /// After an error has been thrown, the database may still be open, and
     /// you can keep on accessing it. It may also remain in a "zombie" state,
     /// in which case it will throw `SQLITE_MISUSE` for all future
     /// database accesses.
@@ -168,7 +168,7 @@ public protocol DatabaseReader: AnyObject, Sendable {
     /// ```
     ///
     /// Database operations are isolated in a transaction: they do not see
-    /// changes performed by eventual concurrent writes (even writes performed
+    /// changes performed by concurrent writes (even writes performed
     /// by other processes).
     ///
     /// The database connection is read-only: attempts to write throw a
@@ -200,7 +200,7 @@ public protocol DatabaseReader: AnyObject, Sendable {
     /// ```
     ///
     /// Database operations are isolated in a transaction: they do not see
-    /// changes performed by eventual concurrent writes (even writes performed
+    /// changes performed by concurrent writes (even writes performed
     /// by other processes).
     ///
     /// The database connection is read-only: attempts to write throw a
@@ -235,7 +235,7 @@ public protocol DatabaseReader: AnyObject, Sendable {
     /// ```
     ///
     /// Database operations are isolated in a transaction: they do not see
-    /// changes performed by eventual concurrent writes (even writes performed
+    /// changes performed by concurrent writes (even writes performed
     /// by other processes).
     ///
     /// The database connection is read-only: attempts to write throw a
@@ -517,7 +517,7 @@ extension DatabaseReader {
     /// ```
     ///
     /// Database operations are isolated in a transaction: they do not see
-    /// changes performed by eventual concurrent writes (even writes performed
+    /// changes performed by concurrent writes (even writes performed
     /// by other processes).
     ///
     /// The database connection is read-only: attempts to write throw a
@@ -696,7 +696,7 @@ extension AnyDatabaseReader: DatabaseReader {
     }
 }
 
-/// A type that sees an unchanging database content.
+/// A type that sees unchanging database content.
 ///
 /// Do not declare new conformances to `DatabaseSnapshotReader`. Only the
 /// built-in conforming types are valid.

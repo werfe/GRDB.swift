@@ -23,9 +23,9 @@ extension NSUUID: DatabaseValueConvertible {
         }
     }
     
-    /// Returns a `NSUUID` from the specified database value.
+    /// Returns an `NSUUID` from the specified database value.
     ///
-    /// If the database value contains a string, parses this string as an uuid.
+    /// If the database value contains a string, parses this string as a uuid.
     ///
     /// If the database value contains a data blob that contains 16 bytes,
     /// returns a uuid from those bytes.
@@ -63,7 +63,7 @@ extension UUID: DatabaseValueConvertible {
     
     /// Returns a `UUID` from the specified database value.
     ///
-    /// If the database value contains a string, parses this string as an uuid.
+    /// If the database value contains a string, parses this string as a uuid.
     ///
     /// If the database value contains a data blob that contains 16 bytes,
     /// returns a uuid from those bytes.
@@ -89,7 +89,7 @@ extension UUID: StatementColumnConvertible {
     public init?(sqliteStatement: SQLiteStatement, index: CInt) {
         switch sqlite3_column_type(sqliteStatement, index) {
         case SQLITE_TEXT:
-            let string = String(cString: sqlite3_column_text(sqliteStatement, index)!)
+            let string = String(sqliteStatement: sqliteStatement, index: index)
             guard let uuid = UUID(uuidString: string) else {
                 return nil
             }

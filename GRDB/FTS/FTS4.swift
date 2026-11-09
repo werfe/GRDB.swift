@@ -155,7 +155,7 @@ extension FTS4: VirtualTableModule {
     }
 }
 
-/// A `FTS4TableDefinition` lets you define the components of an FTS4
+/// An `FTS4TableDefinition` lets you define the components of an FTS4
 /// virtual table.
 ///
 /// You don't create instances of this class. Instead, you use the `Database`
@@ -200,7 +200,7 @@ public final class FTS4TableDefinition {
     /// For example:
     ///
     /// ```swift
-    /// // CREATE VIRTUAL TABLE documents USING fts4(tokenize=porter)
+    /// // CREATE VIRTUAL TABLE document USING fts4(tokenize=porter)
     /// try db.create(virtualTable: "document", using: FTS4()) { t in
     ///     t.tokenizer = .porter
     /// }
@@ -275,7 +275,7 @@ public final class FTS4TableDefinition {
     /// ```
     ///
     /// - parameter name: the column name.
-    /// - returns: A ``FTS4ColumnDefinition`` that allows you to refine the
+    /// - returns: An ``FTS4ColumnDefinition`` that allows you to refine the
     ///   column definition.
     @discardableResult
     public func column(_ name: String) -> FTS4ColumnDefinition {

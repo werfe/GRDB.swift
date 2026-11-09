@@ -6,7 +6,7 @@ A type that can convert itself into and out of a database value.
 
 A `DatabaseValueConvertible` type supports conversion to and from database values (null, integers, doubles, strings, and blobs). `DatabaseValueConvertible` is adopted by `Bool`, `Int`, `String`, `Date`, etc.
 
-> Note: Types that converts to and from multiple columns in a database row must not conform to the `DatabaseValueConvertible` protocol. Those types are called **record types**, and should conform to record protocols instead. See <doc:QueryInterface>.
+> Note: Types that convert to and from multiple columns in a database row must not conform to the `DatabaseValueConvertible` protocol. Those types are called **record types**, and should conform to record protocols instead. See <doc:QueryInterface>.
 
 > Note: Standard collections `Array`, `Set`, and `Dictionary` do not conform to `DatabaseValueConvertible`. To store arrays, sets, or dictionaries in individual database values, wrap them as properties of `Codable` record types. They will automatically be stored as JSON objects and arrays. See <doc:QueryInterface>.
 
@@ -14,7 +14,7 @@ A `DatabaseValueConvertible` type supports conversion to and from database value
 
 To conform to `DatabaseValueConvertible`, implement the two requirements ``fromDatabaseValue(_:)-21zzv`` and ``databaseValue-1ob9k``. Do not customize the ``fromMissingColumn()-7iamp`` requirement. If your type `MyValue` conforms, then the conformance of the optional type `MyValue?` is automatic.
 
-The implementation of `fromDatabaseValue` must return nil if the type can not be decoded from the raw database value. This nil value will have GRDB throw a decoding error accordingly.
+The implementation of `fromDatabaseValue` must return nil if the type cannot be decoded from the raw database value. This nil value will have GRDB throw a decoding error accordingly.
 
 For example:
 
@@ -59,7 +59,7 @@ extension Grape: DatabaseValueConvertible { }
 
 ### Built-in Codable support
 
-`DatabaseValueConvertible` is also ready-made for `Codable` types, which are automatically coded and decoded from JSON arrays and objects:
+`DatabaseValueConvertible` is also ready-made for `Codable` types, which are automatically encoded and decoded from JSON arrays and objects:
 
 ```swift
 struct Color: Codable {
@@ -91,7 +91,7 @@ protocol DatabaseValueConvertible {
 import Tagged
 
 struct Player: Identifiable {
-    // Thanks to Tagged, Player.ID can not be mismatched with Team.ID or
+    // Thanks to Tagged, Player.ID cannot be confused with Team.ID or
     // Award.ID, even though they all wrap strings.
     typealias ID = Tagged<Player, String>
     var id: ID

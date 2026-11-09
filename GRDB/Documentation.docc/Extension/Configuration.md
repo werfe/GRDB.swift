@@ -22,7 +22,7 @@ See <doc:DatabaseConnections>.
 
 #### Tracing SQL Statements
 
-You can setup a tracing function that prints out all executed SQL requests with ``prepareDatabase(_:)`` and ``Database/trace(options:_:)``:
+You can set up a tracing function that prints out all executed SQL requests with ``prepareDatabase(_:)`` and ``Database/trace(options:_:)``:
 
 ```swift
 var config = Configuration()
@@ -35,7 +35,7 @@ let dbQueue = try DatabaseQueue(
     configuration: config)
 
 // Prints "SQL> SELECT COUNT(*) FROM player"
-let playerCount = dbQueue.read { db in
+let playerCount = try dbQueue.read { db in
     try Player.fetchCount(db)
 }
 ```
